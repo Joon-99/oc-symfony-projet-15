@@ -9,15 +9,22 @@ use App\Form\MediaType;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
+use Doctrine\Persistence\ManagerRegistry;
+
 
 class AlbumController extends AbstractController
 {
+    private ManagerRegistry $doctrine;
+
+    public function __construct(ManagerRegistry $doctrine) {
+        $this->doctrine = $doctrine;
+    }
     /**
      * @Route("/admin/album", name="admin_album_index")
      */
     public function index()
     {
-        $albums = $this->getDoctrine()->getRepository(Album::class)->findAll();
+        $albums = $this->doctrine->getRepository(Album::class)->findAll();
 
         return $this->render('admin/album/index.html.twig', ['albums' => $albums]);
     }
@@ -32,8 +39,8 @@ class AlbumController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $this->getDoctrine()->getManager()->persist($album);
-            $this->getDoctrine()->getManager()->flush();
+            $this->doctrine->getManager()->persist($album);
+            $this->doctrine->getManager()->flush();
 
             return $this->redirectToRoute('admin_album_index');
         }
@@ -46,12 +53,12 @@ class AlbumController extends AbstractController
      */
     public function update(Request $request, int $id)
     {
-        $album = $this->getDoctrine()->getRepository(Album::class)->find($id);
+        $album = $this->doctrine->getRepository(Album::class)->find($id);
         $form = $this->createForm(AlbumType::class, $album);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $this->getDoctrine()->getManager()->flush();
+            $this->doctrine->getManager()->flush();
 
             return $this->redirectToRoute('admin_album_index');
         }
@@ -64,9 +71,9 @@ class AlbumController extends AbstractController
      */
     public function delete(int $id)
     {
-        $media = $this->getDoctrine()->getRepository(Album::class)->find($id);
-        $this->getDoctrine()->getManager()->remove($media);
-        $this->getDoctrine()->getManager()->flush();
+        $media = $this->doctrine->getRepository(Album::class)->find($id);
+        $this->doctrine->getManager()->remove($media);
+        $this->doctrine->getManager()->flush();
 
         return $this->redirectToRoute('admin_album_index');
     }
