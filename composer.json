@@ -81,6 +81,10 @@
         ],
         "post-update-cmd": [
             "@auto-scripts"
+        ],
+        "test": [
+            "@php bin/console cache:warmup --env=test",
+            "@php bin/phpunit"
         ]
     },
     "conflict": {
