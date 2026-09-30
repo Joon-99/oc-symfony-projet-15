@@ -2,6 +2,7 @@
 
 namespace App\Tests;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
 /**
@@ -10,9 +11,7 @@ use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
  */
 class SmokeTest extends WebTestCase
 {
-    /**
-     * @dataProvider provideAnonymousRoutes
-     */
+    #[DataProvider('provideAnonymousRoutes')]
     public function testAnonymousRouteDoesNotError(string $path): void
     {
         $client = static::createClient();
