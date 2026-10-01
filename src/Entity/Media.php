@@ -9,10 +9,7 @@ use Symfony\Component\HttpFoundation\File\UploadedFile;
 #[ORM\Entity(repositoryClass: MediaRepository::class)]
 class Media
 {
-    #[ORM\Id]
-    #[ORM\GeneratedValue]
-    #[ORM\Column]
-    private ?int $id = null;
+    use IdTrait;
 
     #[ORM\ManyToOne(targetEntity: User::class, inversedBy: "medias", fetch: "EAGER")]
     private ?User $user = null;
@@ -27,11 +24,6 @@ class Media
     private string $title;
 
     private ?UploadedFile $file = null;
-
-    public function getId(): ?int
-    {
-        return $this->id;
-    }
 
     public function getUser(): ?User
     {
