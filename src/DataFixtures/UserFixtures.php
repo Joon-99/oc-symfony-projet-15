@@ -5,6 +5,7 @@ namespace App\DataFixtures;
 use App\Entity\User;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 class UserFixtures extends Fixture
 {
@@ -18,6 +19,13 @@ class UserFixtures extends Fixture
         . "même de l'architecture moderne. Ses clichés transcendent les formes familières pour révéler des "
         . "perspectives inattendues, offrant une vision nouvelle et captivante du monde urbain.";
 
+    private UserPasswordHasherInterface $passwordHasher;
+
+    public function __construct(UserPasswordHasherInterface $passwordHasher)
+    {
+        $this->passwordHasher = $passwordHasher;
+    }
+
     public function load(ObjectManager $manager): void
     {
         $admin = new User();
@@ -25,6 +33,7 @@ class UserFixtures extends Fixture
         $admin->setName('Ina Zaoui');
         $admin->setEmail('ina@zaoui.com');
         $admin->setDescription(null);
+        $admin->setPassword($this->passwordHasher->hashPassword($admin, 'password'));
 
         $manager->persist($admin);
         $this->addReference(self::ADMIN_REFERENCE, $admin);
@@ -35,6 +44,8 @@ class UserFixtures extends Fixture
             $guest->setName("Invité {$number}");
             $guest->setEmail("invite+{$number}@example.com");
             $guest->setDescription(self::GUEST_DESCRIPTION);
+
+            $guest->setPassword($this->passwordHasher->hashPassword($guest, 'password'));
 
             $manager->persist($guest);
             $this->addReference(self::GUEST_REFERENCE_PREFIX . $number, $guest);
