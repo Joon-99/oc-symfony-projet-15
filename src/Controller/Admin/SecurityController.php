@@ -8,7 +8,7 @@ use Symfony\Component\Security\Http\Authentication\AuthenticationUtils;
 
 class SecurityController extends AbstractController
 {
-    #[Route('/login', name: 'admin_login')]
+    #[Route('/login', name: 'login')]
     public function login(AuthenticationUtils $authenticationUtils)
     {
         $error = $authenticationUtils->getLastAuthenticationError();
@@ -17,5 +17,11 @@ class SecurityController extends AbstractController
             'last_username' => $lastUsername,
             'error'         => $error,
         ]);
+    }
+
+    #[Route('/logout', name: 'logout')]
+    public function logout(): never
+    {
+        throw new \LogicException('Intercepted by the logout in the firewall, this method is never executed.');
     }
 }
