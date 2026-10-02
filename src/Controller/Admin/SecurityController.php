@@ -19,7 +19,7 @@ class SecurityController extends AbstractController
         ]);
     }
 
-    #[Route('/logout', name: 'logout')]
+    #[Route('/logout', name: 'logout', methods: ['POST'])]
     public function logout(): never
     {
         throw new \LogicException('Intercepted by the logout in the firewall, this method is never executed.');

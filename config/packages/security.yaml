@@ -21,10 +21,28 @@ security:
             logout:
                 path: logout
                 target: home
+                enable_csrf: true
     role_hierarchy:
         ROLE_ADMIN: ROLE_USER
     access_control:
-        - { path: ^/admin, roles: ROLE_ADMIN }
+        - { route: login, roles: PUBLIC_ACCESS }
+        - { route: logout, roles: PUBLIC_ACCESS }
+        - { route: home, roles: PUBLIC_ACCESS }
+        - { route: guests, roles: PUBLIC_ACCESS }
+        - { route: guest, roles: PUBLIC_ACCESS }
+        - { route: portfolio, roles: PUBLIC_ACCESS }
+        - { route: about, roles: PUBLIC_ACCESS }
+
+        - { route: admin_album_index, roles: ROLE_ADMIN }
+        - { route: admin_album_add, roles: ROLE_ADMIN }
+        - { route: admin_album_update, roles: ROLE_ADMIN }
+        - { route: admin_album_delete, roles: ROLE_ADMIN }
+        - { route: admin_media_index, roles: ROLE_ADMIN }
+        - { route: admin_media_add, roles: ROLE_ADMIN }
+        - { route: admin_media_delete, roles: ROLE_ADMIN }
+
+        # deny everything else
+        - { path: ^/, roles: ROLE_DENIED }
 
 when@test:
     security:

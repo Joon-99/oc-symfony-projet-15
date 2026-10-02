@@ -32,7 +32,7 @@ class HomeController extends AbstractController
         ]);
     }
 
-    #[Route('/guest/{id}', name: 'guest')]
+    #[Route('/guest/{id}', name: 'guest', requirements: ['id' => '\d+'])]
     public function guest(int $id)
     {
         $guest = $this->doctrine->getRepository(User::class)->find($id);
@@ -41,7 +41,7 @@ class HomeController extends AbstractController
         ]);
     }
 
-    #[Route('/portfolio/{id}', name: 'portfolio')]
+    #[Route('/portfolio/{id}', name: 'portfolio', requirements: ['id' => '\d+'])]
     public function portfolio(?int $id = null)
     {
         $albums = $this->doctrine->getRepository(Album::class)->findAll();

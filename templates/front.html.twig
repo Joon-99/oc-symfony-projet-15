@@ -28,7 +28,10 @@
                         </li>
                         {% if is_granted('ROLE_USER') %}
                             <li class="nav-item">
-                                <a class="nav-link" href="{{ path('logout') }}">Déconnexion</a>
+                                <form action="{{ path('logout') }}" method="post">
+                                    <input type="hidden" name="_csrf_token" value="{{ csrf_token('logout') }}">
+                                    <button class="nav-link" type="submit">Déconnexion</button>
+                                </form>
                             </li>
                         {% else %}
                             <li class="nav-item">
