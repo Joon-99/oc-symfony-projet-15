@@ -3,11 +3,13 @@
 namespace App\Controller\Admin;
 
 use App\Entity\Media;
+use App\Entity\User;
 use App\Form\MediaType;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\CurrentUser;
 
 class MediaController extends AbstractController
 {
@@ -18,14 +20,14 @@ class MediaController extends AbstractController
     }
 
     #[Route('/admin/media', name: 'admin_media_index')]
-    public function index(Request $request)
+    public function index(Request $request, #[CurrentUser] ?User $user)
     {
         $page = $request->query->getInt('page', 1);
 
         $criteria = [];
 
         if (!$this->isGranted('ROLE_ADMIN')) {
-            $criteria['user'] = $this->getUser();
+            $criteria['user'] = $user;
         }
 
         $medias = $this->doctrine->getRepository(Media::class)->findBy(
@@ -44,7 +46,7 @@ class MediaController extends AbstractController
     }
 
     #[Route('/admin/media/add', name: 'admin_media_add')]
-    public function add(Request $request)
+    public function add(Request $request, #[CurrentUser] ?User $user)
     {
         $media = new Media();
         $form = $this->createForm(MediaType::class, $media, ['is_admin' => $this->isGranted('ROLE_ADMIN')]);
@@ -52,7 +54,7 @@ class MediaController extends AbstractController
 
         if ($form->isSubmitted() && $form->isValid()) {
             if (!$this->isGranted('ROLE_ADMIN')) {
-                $media->setUser($this->getUser());
+                $media->setUser($user);
             }
             $media->setPath('uploads/' . md5(uniqid()) . '.' . $media->getFile()->guessExtension());
             $media->getFile()->move('uploads/', $media->getPath());
