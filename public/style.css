@@ -12,6 +12,13 @@ header nav .nav-link {
     font-weight: 300;
 }
 
+header nav button.nav-link {
+    border: 0;
+    background: transparent;
+    text-align: left;
+    cursor: pointer;
+}
+
 .home-img {
     aspect-ratio: 60/76;
     object-fit: cover;
@@ -69,7 +76,8 @@ p {
     max-width: 341px;
 }
 
-a {
+a,
+header nav button.nav-link {
     color: #333;
     font-family: "DM Sans", sans-serif;
 }
