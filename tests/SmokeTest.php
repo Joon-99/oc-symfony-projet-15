@@ -20,6 +20,9 @@ class SmokeTest extends WebTestCase
         $this->assertLessThan(500, $client->getResponse()->getStatusCode());
     }
 
+    /**
+     * @return iterable<string, string[]>
+     */
     public static function provideAnonymousRoutes(): iterable
     {
         yield 'home' => ['/'];

@@ -3,54 +3,57 @@
 namespace App\Controller;
 
 use App\Entity\Album;
-use App\Entity\Media;
-use App\Entity\User;
-use Doctrine\Persistence\ManagerRegistry;
+use App\Repository\UserRepository;
+use App\Repository\AlbumRepository;
+use App\Repository\MediaRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 
 class HomeController extends AbstractController
 {
-    private ManagerRegistry $doctrine;
+    private UserRepository $userRepository;
+    private AlbumRepository $albumRepository;
+    private MediaRepository $mediaRepository;
 
-    public function __construct(ManagerRegistry $doctrine) {
-        $this->doctrine = $doctrine;
+    public function __construct(UserRepository $userRepository, AlbumRepository $albumRepository, MediaRepository $mediaRepository) {
+        $this->userRepository = $userRepository;
+        $this->albumRepository = $albumRepository;
+        $this->mediaRepository = $mediaRepository;
     }
 
     #[Route('/', name: 'home')]
-    public function home()
+    public function home(): Response
     {
         return $this->render('front/home.html.twig');
     }
 
     #[Route('/guests', name: 'guests')]
-    public function guests()
+    public function guests(): Response
     {
-        $guests = $this->doctrine->getRepository(User::class)->findBy(['admin' => false]);
+        $guests = $this->userRepository->findBy(['admin' => false]);
         return $this->render('front/guests.html.twig', [
             'guests' => $guests
         ]);
     }
 
     #[Route('/guest/{id}', name: 'guest', requirements: ['id' => '\d+'])]
-    public function guest(int $id)
+    public function guest(int $id): Response
     {
-        $guest = $this->doctrine->getRepository(User::class)->find($id);
+        $guest = $this->userRepository->find($id);
         return $this->render('front/guest.html.twig', [
             'guest' => $guest
         ]);
     }
 
-    #[Route('/portfolio/{id}', name: 'portfolio', requirements: ['id' => '\d+'])]
-    public function portfolio(?int $id = null)
+    #[Route('/portfolio/{album}', name: 'portfolio', requirements: ['album' => '\d+'])]
+    public function portfolio(
+        ?Album $album = null): Response
     {
-        $albums = $this->doctrine->getRepository(Album::class)->findAll();
-        $album = $id ? $this->doctrine->getRepository(Album::class)->find($id) : null;
-        $user = $this->doctrine->getRepository(User::class)->findOneByAdmin(true);
+        $albums = $this->albumRepository->findAll();
+        $admin = $this->userRepository->findOneByAdmin(true);
 
-        $medias = $album
-            ? $this->doctrine->getRepository(Media::class)->findByAlbum($album)
-            : $this->doctrine->getRepository(Media::class)->findByUser($user);
+        $medias = $album ? $this->mediaRepository->findByAlbum($album) : $this->mediaRepository->findByUser($admin);
         return $this->render('front/portfolio.html.twig', [
             'albums' => $albums,
             'album' => $album,
@@ -59,7 +62,7 @@ class HomeController extends AbstractController
     }
 
     #[Route('/about', name: 'about')]
-    public function about()
+    public function about(): Response
     {
         return $this->render('front/about.html.twig');
     }

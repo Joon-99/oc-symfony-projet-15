@@ -6,10 +6,11 @@ use App\Entity\Album;
 use App\Entity\Media;
 use App\Form\AlbumType;
 use App\Form\MediaType;
+use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
-use Doctrine\Persistence\ManagerRegistry;
 
 
 class AlbumController extends AbstractController
@@ -20,7 +21,7 @@ class AlbumController extends AbstractController
         $this->doctrine = $doctrine;
     }
     #[Route('/admin/album', name: 'admin_album_index')]
-    public function index()
+    public function index(): Response
     {
         $albums = $this->doctrine->getRepository(Album::class)->findAll();
 
@@ -28,7 +29,7 @@ class AlbumController extends AbstractController
     }
 
     #[Route('/admin/album/add', name: 'admin_album_add')]
-    public function add(Request $request)
+    public function add(Request $request): Response
     {
         $album = new Album();
         $form = $this->createForm(AlbumType::class, $album);
@@ -45,7 +46,7 @@ class AlbumController extends AbstractController
     }
 
     #[Route('/admin/album/update/{id}', name: 'admin_album_update', requirements: ['id' => '\d+'])]
-    public function update(Request $request, int $id)
+    public function update(Request $request, int $id): Response
     {
         $album = $this->doctrine->getRepository(Album::class)->find($id);
         $form = $this->createForm(AlbumType::class, $album);
@@ -61,7 +62,7 @@ class AlbumController extends AbstractController
     }
 
     #[Route('/admin/album/delete/{id}', name: 'admin_album_delete', requirements: ['id' => '\d+'])]
-    public function delete(int $id)
+    public function delete(int $id): Response
     {
         $album = $this->doctrine->getRepository(Album::class)->find($id);
         $this->doctrine->getManager()->remove($album);
