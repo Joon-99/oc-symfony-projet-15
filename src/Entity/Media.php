@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use App\Entity\Trait\IdTrait;
 use App\Repository\MediaRepository;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\HttpFoundation\File\UploadedFile;

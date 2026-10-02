@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use App\Entity\Trait\IdTrait;
 use App\Repository\AlbumRepository;
 use Doctrine\ORM\Mapping as ORM;
 
