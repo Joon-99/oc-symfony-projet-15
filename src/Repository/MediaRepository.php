@@ -18,9 +18,9 @@ class MediaRepository extends ServiceEntityRepository
         parent::__construct($registry, Media::class);
     }
 
-   /**
-    * @return Media[]
-    */
+    /**
+     * @return Media[]
+     */
     public function findByAlbum(Album $value): array
     {
         return $this->createQueryBuilder('m')
@@ -33,20 +33,20 @@ class MediaRepository extends ServiceEntityRepository
     }
 
     /**
-    * @return Media[]
-    */
+     * @return Media[]
+     */
     public function findByUser(?User $user): array
     {
         return $this->findBy(['user' => $user], ['id' => 'ASC']);
     }
 
-//    public function findOneBySomeField($value): ?Media
-//    {
-//        return $this->createQueryBuilder('m')
-//            ->andWhere('m.exampleField = :val')
-//            ->setParameter('val', $value)
-//            ->getQuery()
-//            ->getOneOrNullResult()
-//        ;
-//    }
+    //    public function findOneBySomeField($value): ?Media
+    //    {
+    //        return $this->createQueryBuilder('m')
+    //            ->andWhere('m.exampleField = :val')
+    //            ->setParameter('val', $value)
+    //            ->getQuery()
+    //            ->getOneOrNullResult()
+    //        ;
+    //    }
 }

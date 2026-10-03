@@ -38,6 +38,4 @@ class UserTest extends TestCase
         $user = new User();
         $this->assertTrue($user->getMedias()->isEmpty());
     }
-
-
 }

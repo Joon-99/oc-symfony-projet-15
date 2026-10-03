@@ -14,10 +14,10 @@ class UserFixtures extends Fixture
     public const GUEST_REFERENCE_PREFIX = 'user_guest_';
 
     private const GUEST_DESCRIPTION = "Le maître de l'urbanité capturée, explore les méandres des cités avec un "
-        . "regard vif et impétueux, figeant l'énergie des rues dans des instants éblouissants. À travers une "
-        . "technique avant-gardiste, il métamorphose le béton et l'acier en toiles abstraites, révélant l'essence "
-        . "même de l'architecture moderne. Ses clichés transcendent les formes familières pour révéler des "
-        . "perspectives inattendues, offrant une vision nouvelle et captivante du monde urbain.";
+        ."regard vif et impétueux, figeant l'énergie des rues dans des instants éblouissants. À travers une "
+        ."technique avant-gardiste, il métamorphose le béton et l'acier en toiles abstraites, révélant l'essence "
+        ."même de l'architecture moderne. Ses clichés transcendent les formes familières pour révéler des "
+        .'perspectives inattendues, offrant une vision nouvelle et captivante du monde urbain.';
 
     private UserPasswordHasherInterface $passwordHasher;
 
@@ -38,7 +38,7 @@ class UserFixtures extends Fixture
         $manager->persist($admin);
         $this->addReference(self::ADMIN_REFERENCE, $admin);
 
-        for ($number = 0; $number < self::GUEST_COUNT; $number++) {
+        for ($number = 0; $number < self::GUEST_COUNT; ++$number) {
             $guest = new User();
             $guest->setAdmin(false);
             $guest->setName("Invité {$number}");
@@ -48,7 +48,7 @@ class UserFixtures extends Fixture
             $guest->setPassword($this->passwordHasher->hashPassword($guest, 'password'));
 
             $manager->persist($guest);
-            $this->addReference(self::GUEST_REFERENCE_PREFIX . $number, $guest);
+            $this->addReference(self::GUEST_REFERENCE_PREFIX.$number, $guest);
         }
 
         $manager->flush();

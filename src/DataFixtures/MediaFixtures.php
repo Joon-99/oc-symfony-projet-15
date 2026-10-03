@@ -23,7 +23,7 @@ class MediaFixtures extends Fixture implements DependentFixtureInterface
         $uploadNumber = 1;
 
         foreach ($this->getUsers() as $user) {
-            for ($titleNumber = 0; $titleNumber < self::MEDIA_PER_USER; $titleNumber++) {
+            for ($titleNumber = 0; $titleNumber < self::MEDIA_PER_USER; ++$titleNumber) {
                 $media = new Media();
                 $media->setUser($user);
                 $media->setTitle("Titre {$titleNumber}");
@@ -34,7 +34,7 @@ class MediaFixtures extends Fixture implements DependentFixtureInterface
                 }
 
                 $manager->persist($media);
-                $uploadNumber++;
+                ++$uploadNumber;
             }
         }
 
@@ -45,7 +45,7 @@ class MediaFixtures extends Fixture implements DependentFixtureInterface
     {
         $albumNumber = intdiv($titleNumber, self::MEDIA_PER_ALBUM) + 1;
 
-        return $this->getReference(AlbumFixtures::ALBUM_REFERENCE_PREFIX . $albumNumber, Album::class);
+        return $this->getReference(AlbumFixtures::ALBUM_REFERENCE_PREFIX.$albumNumber, Album::class);
     }
 
     /**
@@ -55,8 +55,8 @@ class MediaFixtures extends Fixture implements DependentFixtureInterface
     {
         yield $this->getReference(UserFixtures::ADMIN_REFERENCE, User::class);
 
-        for ($number = 0; $number < UserFixtures::GUEST_COUNT; $number++) {
-            yield $this->getReference(UserFixtures::GUEST_REFERENCE_PREFIX . $number, User::class);
+        for ($number = 0; $number < UserFixtures::GUEST_COUNT; ++$number) {
+            yield $this->getReference(UserFixtures::GUEST_REFERENCE_PREFIX.$number, User::class);
         }
     }
 

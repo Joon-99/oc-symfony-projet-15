@@ -9,10 +9,8 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
-use Override;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
-
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\Table(name: '`user`')]
@@ -115,19 +113,19 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->admin = $admin;
     }
 
-    #[Override]
+    #[\Override]
     public function getRoles(): array
     {
         return $this->admin ? ['ROLE_ADMIN'] : ['ROLE_USER'];
     }
 
-    #[Override]
+    #[\Override]
     public function getUserIdentifier(): string
     {
         return $this->email;
     }
 
-    #[Override]
+    #[\Override]
     public function eraseCredentials(): void
     {
         // no sensitive data to erase

@@ -3,23 +3,22 @@
 namespace App\Controller\Admin;
 
 use App\Entity\Album;
-use App\Entity\Media;
 use App\Form\AlbumType;
-use App\Form\MediaType;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 
-
 class AlbumController extends AbstractController
 {
     private ManagerRegistry $doctrine;
 
-    public function __construct(ManagerRegistry $doctrine) {
+    public function __construct(ManagerRegistry $doctrine)
+    {
         $this->doctrine = $doctrine;
     }
+
     #[Route('/admin/album', name: 'admin_album_index')]
     public function index(): Response
     {

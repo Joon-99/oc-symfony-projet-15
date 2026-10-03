@@ -8,15 +8,16 @@ use App\Form\MediaType;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\CurrentUser;
 
 class MediaController extends AbstractController
 {
     private ManagerRegistry $doctrine;
 
-    public function __construct(ManagerRegistry $doctrine) {
+    public function __construct(ManagerRegistry $doctrine)
+    {
         $this->doctrine = $doctrine;
     }
 
@@ -42,7 +43,7 @@ class MediaController extends AbstractController
         return $this->render('admin/media/index.html.twig', [
             'medias' => $medias,
             'total' => $total,
-            'page' => $page
+            'page' => $page,
         ]);
     }
 
@@ -57,7 +58,7 @@ class MediaController extends AbstractController
             if (!$this->isGranted('ROLE_ADMIN')) {
                 $media->setUser($user);
             }
-            $media->setPath('uploads/' . md5(uniqid()) . '.' . $media->getFile()->guessExtension());
+            $media->setPath('uploads/'.md5(uniqid()).'.'.$media->getFile()->guessExtension());
             $media->getFile()->move('uploads/', $media->getPath());
             $this->doctrine->getManager()->persist($media);
             $this->doctrine->getManager()->flush();
