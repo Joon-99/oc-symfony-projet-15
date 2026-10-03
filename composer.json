@@ -85,7 +85,7 @@
         "test": [
             "@putenv XDEBUG_MODE=coverage",
             "@php bin/console cache:warmup --env=test",
-            "@php bin/phpunit --coverage-html ./coverage"
+            "@php bin/phpunit --coverage-html ./coverage --display-all-issues --testdox"
         ]
     },
     "conflict": {
