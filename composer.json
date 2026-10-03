@@ -83,8 +83,9 @@
             "@auto-scripts"
         ],
         "test": [
+            "@putenv XDEBUG_MODE=coverage",
             "@php bin/console cache:warmup --env=test",
-            "@php bin/phpunit"
+            "@php bin/phpunit --coverage-html ./coverage"
         ]
     },
     "conflict": {

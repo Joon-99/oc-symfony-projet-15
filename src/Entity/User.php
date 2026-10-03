@@ -133,6 +133,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this->email;
     }
 
+    /**
+     * @codeCoverageIgnore
+     */
     #[\Override]
     public function eraseCredentials(): void
     {

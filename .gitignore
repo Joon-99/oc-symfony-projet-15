@@ -1,5 +1,6 @@
 /.idea
 /composer.phar
+/coverage
 ###> symfony/framework-bundle ###
 /.env.local
 /.env.local.php
