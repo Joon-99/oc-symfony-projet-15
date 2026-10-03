@@ -31,9 +31,10 @@ class Media
         return $this->user;
     }
 
-    public function setUser(?User $user): void
+    public function setUser(?User $user): static
     {
         $this->user = $user;
+        return $this;
     }
 
     public function getPath(): string
@@ -41,9 +42,10 @@ class Media
         return $this->path;
     }
 
-    public function setPath(string $path): void
+    public function setPath(string $path): static
     {
         $this->path = $path;
+        return $this;
     }
 
     public function getTitle(): string
@@ -51,9 +53,10 @@ class Media
         return $this->title;
     }
 
-    public function setTitle(string $title): void
+    public function setTitle(string $title): static
     {
         $this->title = $title;
+        return $this;
     }
 
     public function getFile(): ?UploadedFile
@@ -61,9 +64,10 @@ class Media
         return $this->file;
     }
 
-    public function setFile(?UploadedFile $file): void
+    public function setFile(?UploadedFile $file): static
     {
         $this->file = $file;
+        return $this;
     }
 
     public function getAlbum(): ?Album
@@ -71,8 +75,9 @@ class Media
         return $this->album;
     }
 
-    public function setAlbum(?Album $album): void
+    public function setAlbum(?Album $album): static
     {
         $this->album = $album;
+        return $this;
     }
 }

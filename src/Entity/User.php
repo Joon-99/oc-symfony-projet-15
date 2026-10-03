@@ -72,9 +72,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this->name;
     }
 
-    public function setName(string $name): void
+    public function setName(string $name): static
     {
         $this->name = $name;
+
+        return $this;
     }
 
     public function getDescription(): ?string
@@ -82,9 +84,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this->description;
     }
 
-    public function setDescription(?string $description): void
+    public function setDescription(?string $description): static
     {
         $this->description = $description;
+
+        return $this;
     }
 
     /**
@@ -98,9 +102,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     /**
      * @param Collection<int, Media> $medias
      */
-    public function setMedias(Collection $medias): void
+    public function setMedias(Collection $medias): static
     {
         $this->medias = $medias;
+
+        return $this;
     }
 
     public function isAdmin(): bool
@@ -108,9 +114,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this->admin;
     }
 
-    public function setAdmin(bool $admin): void
+    public function setAdmin(bool $admin): static
     {
         $this->admin = $admin;
+
+        return $this;
     }
 
     #[\Override]
