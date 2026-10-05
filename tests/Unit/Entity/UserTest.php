@@ -43,7 +43,7 @@ class UserTest extends TestCase
 
     public function testAccessors(): void
     {
-        $testMedia = (new Media())->setPath('path/to/media')->setTitle('Media Title'); 
+        $testMedia = (new Media())->setPath('path/to/media')->setTitle('Media Title');
         $userData = [
             'email' => 'test@example.com',
             'password' => 'password',
@@ -69,7 +69,5 @@ class UserTest extends TestCase
 
         $user->setMedias($userData['medias']);
         $this->assertSame($userData['medias'], $user->getMedias());
-
-
     }
 }

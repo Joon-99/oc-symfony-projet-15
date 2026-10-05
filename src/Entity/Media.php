@@ -34,6 +34,7 @@ class Media
     public function setUser(?User $user): static
     {
         $this->user = $user;
+
         return $this;
     }
 
@@ -45,6 +46,7 @@ class Media
     public function setPath(string $path): static
     {
         $this->path = $path;
+
         return $this;
     }
 
@@ -56,6 +58,7 @@ class Media
     public function setTitle(string $title): static
     {
         $this->title = $title;
+
         return $this;
     }
 
@@ -67,6 +70,7 @@ class Media
     public function setFile(?UploadedFile $file): static
     {
         $this->file = $file;
+
         return $this;
     }
 
@@ -78,6 +82,7 @@ class Media
     public function setAlbum(?Album $album): static
     {
         $this->album = $album;
+
         return $this;
     }
 }
