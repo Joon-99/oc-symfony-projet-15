@@ -7,6 +7,8 @@ use App\Entity\User;
 use App\Form\MediaType;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use Symfony\Component\Filesystem\Path;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -48,7 +50,7 @@ class MediaController extends AbstractController
     }
 
     #[Route('/admin/media/add', name: 'admin_media_add')]
-    public function add(Request $request, #[CurrentUser] ?User $user): Response
+    public function add(Request $request, #[CurrentUser] ?User $user, #[Autowire('%media_upload_dir%')] string $mediaUploadsDir): Response
     {
         $media = new Media();
         $form = $this->createForm(MediaType::class, $media, ['is_admin' => $this->isGranted('ROLE_ADMIN')]);
@@ -58,8 +60,9 @@ class MediaController extends AbstractController
             if (!$this->isGranted('ROLE_ADMIN')) {
                 $media->setUser($user);
             }
-            $media->setPath('uploads/'.md5(uniqid()).'.'.$media->getFile()->guessExtension());
-            $media->getFile()->move('uploads/', $media->getPath());
+            $fileName = md5(uniqid()).'.'.$media->getFile()->guessExtension();
+            $media->setPath('uploads/'.$fileName);
+            $media->getFile()->move($mediaUploadsDir, $fileName);
             $this->doctrine->getManager()->persist($media);
             $this->doctrine->getManager()->flush();
 
@@ -70,12 +73,12 @@ class MediaController extends AbstractController
     }
 
     #[Route('/admin/media/delete/{id}', name: 'admin_media_delete')]
-    public function delete(int $id): Response
+    public function delete(int $id, #[Autowire('%media_upload_dir%')] string $mediaUploadsDir): Response
     {
         $media = $this->doctrine->getRepository(Media::class)->find($id);
         $this->doctrine->getManager()->remove($media);
         $this->doctrine->getManager()->flush();
-        unlink($media->getPath());
+        unlink(Path::join($mediaUploadsDir, basename($media->getPath())));
 
         return $this->redirectToRoute('admin_media_index');
     }
