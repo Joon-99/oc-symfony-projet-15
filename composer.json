@@ -86,6 +86,12 @@
             "@putenv XDEBUG_MODE=coverage",
             "@php bin/console cache:warmup --env=test",
             "@php bin/phpunit --coverage-html ./coverage --display-all-issues --testdox"
+        ],
+        "pstan": [
+            "./vendor/bin/phpstan analyse"
+        ],
+        "pcsfixer": [
+            "./vendor/bin/php-cs-fixer fix"
         ]
     },
     "conflict": {
