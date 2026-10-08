@@ -136,6 +136,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     /**
      * @codeCoverageIgnore
      */
+    #[\Deprecated(since: 'symfony/security-bundle 7.3')]
     #[\Override]
     public function eraseCredentials(): void
     {
