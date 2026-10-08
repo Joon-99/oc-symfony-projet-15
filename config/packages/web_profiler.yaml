@@ -8,6 +8,6 @@ when@dev:
 
 when@test:
     framework:
-        profiler: 
+        profiler:
             collect: false
             collect_serializer_data: true
