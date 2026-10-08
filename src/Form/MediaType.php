@@ -22,6 +22,7 @@ class MediaType extends AbstractType
         $builder
             ->add('file', FileType::class, [
                 'label' => 'Image',
+                'help' => 'Image uniquement (JPEG, PNG, GIF, WEBP) - 2 Mo maximum.',
             ])
             ->add('title', TextType::class, [
                 'label' => 'Titre',

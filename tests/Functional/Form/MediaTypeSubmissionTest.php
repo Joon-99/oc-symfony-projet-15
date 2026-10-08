@@ -5,10 +5,12 @@ namespace App\Tests\Functional\Form;
 use App\Repository\AlbumRepository;
 use App\Repository\MediaRepository;
 use App\Repository\UserRepository;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\DomCrawler\Field\FileFormField;
 use Symfony\Component\Filesystem\Path;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 
 class MediaTypeSubmissionTest extends WebTestCase
 {
@@ -98,6 +100,48 @@ class MediaTypeSubmissionTest extends WebTestCase
         $this->client->followRedirect();
         $this->assertResponseIsSuccessful();
         $this->assertSelectorExists('button:contains("Déconnexion")');
+    }
+
+    #[DataProvider('invalidUploadProvider')]
+    public function testInvalidUploadIsRejected(bool $oversized, string $message): void
+    {
+        $path = tempnam(sys_get_temp_dir(), 'media-upload-');
+        $this->assertNotFalse($path);
+
+        try {
+            $contents = 'This is not an image.';
+            if ($oversized) {
+                $contents = file_get_contents($this->testFilePath);
+                $this->assertNotFalse($contents);
+                $contents = str_pad($contents, 2_000_001, "\0");
+            }
+            $this->assertSame(strlen($contents), file_put_contents($path, $contents));
+
+            $title = 'Invalid Media PHPUnit '.uniqid();
+            $crawler = $this->client->request('GET', '/admin/media/add');
+            $form = $crawler->filter('form[name=media]')->form(['media[title]' => $title]);
+            $this->client->request($form->getMethod(), $form->getUri(), $form->getPhpValues(), [
+                'media' => ['file' => new UploadedFile($path, 'photo.jpg', 'image/jpeg', null, true)],
+            ]);
+
+            $this->assertResponseIsSuccessful();
+            $this->assertSelectorTextContains('form[name=media]', $message);
+            $this->assertNull($this->mediaRepository->findOneBy(['title' => $title]));
+            $this->assertFileExists($path);
+        } finally {
+            unlink($path);
+        }
+    }
+
+    /**
+     * @return array<string, array{bool, string}>
+     */
+    public static function invalidUploadProvider(): array
+    {
+        return [
+            'fake JPEG' => [false, "Le type de fichier n'est pas valide"],
+            'image above 2 MB' => [true, 'Le fichier est trop volumineux'],
+        ];
     }
 
     #[\Override]

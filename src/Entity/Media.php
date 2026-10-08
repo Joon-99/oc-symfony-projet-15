@@ -26,6 +26,18 @@ class Media
     #[ORM\Column]
     private string $title;
 
+    #[Assert\Image(
+        maxSize: '2M',
+        mimeTypes: [
+            'image/jpeg',
+            'image/png',
+            'image/gif',
+            'image/webp',
+        ],
+        detectCorrupted: true, // This forces Symfony to actually decode the image, avoids relying only on mime type to determine image validity
+        maxSizeMessage: 'Le fichier est trop volumineux ({{ size }} {{ suffix }}). La taille maximale autorisée est {{ limit }} {{ suffix }}.',
+        mimeTypesMessage: 'Le type de fichier n\'est pas valide ({{ type }}). Types autorisés : {{ types }}.',
+    )]
     private ?UploadedFile $file = null;
 
     public function getUser(): ?User
