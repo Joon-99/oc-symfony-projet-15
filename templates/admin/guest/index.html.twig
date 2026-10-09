@@ -17,8 +17,9 @@
         {% for guest in guests %}
             <tr>
                 <td>{{ guest.name }}</td>
-                <td>{{ guest.active ? 'Oui' : 'Non' }}</td>
+                <td> {{ guest.isActive() ? 'Oui' : 'Désactivé depuis le ' ~ guest.disabledAt|date('d/m/Y H:i') }}</td>
                 <td>
+                    {% include 'admin/guest/_enableDisableGuestButton.html.twig' with {'guest': guest} %}
                     {# <a href="{{ path('admin_guest_update', {id: guest.id}) }}" class="btn btn-warning">Modifier</a>
                     <a href="{{ path('admin_guest_delete', {id: guest.id}) }}" class="btn btn-danger">Supprimer</a> #}
                 </td>

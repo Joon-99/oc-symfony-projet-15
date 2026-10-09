@@ -1,0 +1,8 @@
+{% set route = guest.isActive() ? path('admin_guest_disable', {'toDisable': guest.id}) : path('admin_guest_enable', {'toEnable': guest.id}) %}
+{% set csrfToken = guest.isActive() ? csrf_token('disable_guest') : csrf_token('enable_guest') %}
+{% set buttonText = guest.isActive() ? 'Désactiver' : 'Activer' %}
+{% set buttonClass = guest.isActive() ? 'btn btn-danger' : 'btn btn-success' %}
+<form method="post" action="{{ route }}">
+    <input type="hidden" name="_token" value="{{ csrfToken }}">
+    <button type="submit" class="{{ buttonClass }}">{{ buttonText }}</button>
+</form>
