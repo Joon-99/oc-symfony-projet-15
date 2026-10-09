@@ -48,8 +48,23 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
     //        ;
     //    }
 
-    public function findOneByAdmin(bool $value): ?User
+
+    /**
+     * @return array<User>
+     */
+    public function findByAdmin(bool $isAdmin): array
     {
-        return $this->findOneBy(['admin' => $value]);
+        return $this->createQueryBuilder('u')
+            ->andWhere('u.admin = :val')
+            ->setParameter('val', $isAdmin)
+            ->orderBy('u.name', 'ASC')
+            ->getQuery()
+            ->getResult()
+        ;
+    }
+
+    public function findOneByAdmin(bool $isAdmin): ?User
+    {
+        return $this->findOneBy(['admin' => $isAdmin]);
     }
 }

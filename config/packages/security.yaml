@@ -40,6 +40,7 @@ security:
         - { route: admin_media_index, roles: ROLE_ADMIN }
         - { route: admin_media_add, roles: ROLE_ADMIN }
         - { route: admin_media_delete, roles: ROLE_ADMIN }
+        - { route: admin_guest, roles: ROLE_ADMIN }
 
         # deny everything else
         - { path: ^/, roles: ROLE_DENIED }
