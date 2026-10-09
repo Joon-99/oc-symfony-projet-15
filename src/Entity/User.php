@@ -5,6 +5,7 @@ namespace App\Entity;
 use App\Entity\Trait\IdTrait;
 use App\Repository\UserRepository;
 use App\Validator\Constraints as AppAssert;
+use Symfony\Component\Validator\Constraints as Assert;
 use DateTimeImmutable;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -24,6 +25,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Equatab
     private bool $admin = false;
 
     #[ORM\Column(type: Types::STRING, length: 255, nullable: false)]
+    #[Assert\NotBlank]
     private string $name;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
@@ -34,7 +36,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Equatab
     private string $email;
 
     #[ORM\Column(type: Types::STRING, length: 255, nullable: false)]
+    #[Assert\DisableAutoMapping]
     private string $password;
+
+    #[AppAssert\ValidPassword(groups: ['createGuest'])]
+    private ?string $plainPassword = null;
 
     /** @var Collection<int, Media> */
     #[ORM\OneToMany(targetEntity: Media::class, mappedBy: 'user')]
@@ -42,6 +48,18 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Equatab
 
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
     private ?DateTimeImmutable $disabledAt = null;
+
+    public function getPlainPassword(): ?string
+    {
+        return $this->plainPassword;
+    }
+
+    public function setPlainPassword(?string $plainPassword): static
+    {
+        $this->plainPassword = $plainPassword;
+
+        return $this;
+    }
 
     public function isActive(): bool
     {
@@ -73,6 +91,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Equatab
     public function setPassword(string $password): static
     {
         $this->password = $password;
+        $this->plainPassword = null;
 
         return $this;
     }

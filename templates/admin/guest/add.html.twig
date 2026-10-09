@@ -1,0 +1,14 @@
+{% extends 'admin.html.twig' %}
+
+{% block admin %}
+    <div class="d-flex justify-content-between align-items-center">
+        <h1>Ajouter un invité</h1>
+        <a href="{{ path('admin_guest') }}" class="btn btn-primary">Retour</a>
+    </div>
+    {{ form_start(form) }}
+        {{ form_row(form.name) }}
+        {{ form_row(form.email) }}
+        {{ form_row(form.plainPassword) }}
+        <button class="btn btn-primary">Créer</button>
+    {{ form_end(form) }}
+{% endblock %}

@@ -3,9 +3,11 @@
 namespace App\Controller\Admin;
 
 use App\Entity\User;
+use App\Form\GuestType;
 use App\Repository\UserRepository;
 use App\Service\UserService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsCsrfTokenValid;
@@ -65,5 +67,20 @@ class GuestController extends AbstractController
         }
 
         return $this->redirectToRoute('admin_guest');
+    }
+
+    #[IsGranted('ROLE_ADMIN')]
+    #[Route('/admin/guest/add', name: 'admin_guest_add', methods: ['GET', 'POST'])]
+    public function createGuest(Request $request): Response {
+        $form = $this->createForm(GuestType::class);
+        $form->handleRequest($request);
+        if ($form->isSubmitted() && $form->isValid()) {
+            $this->userService->createGuestUser($form->getData());
+            $this->addFlash('success', 'Invité créé avec succès.');
+            return $this->redirectToRoute('admin_guest');
+        }
+        return $this->render('admin/guest/add.html.twig', [
+            'form' => $form,
+        ]);
     }
 }
