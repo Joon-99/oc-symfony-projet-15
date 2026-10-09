@@ -5,6 +5,7 @@ namespace App\Entity;
 use App\Entity\Trait\IdTrait;
 use App\Repository\UserRepository;
 use App\Validator\Constraints as AppAssert;
+use DateTimeImmutable;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
@@ -37,6 +38,26 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     /** @var Collection<int, Media> */
     #[ORM\OneToMany(targetEntity: Media::class, mappedBy: 'user')]
     private Collection $medias;
+
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
+    private ?DateTimeImmutable $disabledAt = null;
+
+    public function isActive(): bool
+    {
+        return $this->disabledAt === null;
+    }
+
+    public function getDisabledAt(): ?DateTimeImmutable
+    {
+        return $this->disabledAt;
+    }
+
+    public function setDisabledAt(?DateTimeImmutable $disabledAt): static
+    {
+        $this->disabledAt = $disabledAt;
+
+        return $this;
+    }
 
     public function __construct()
     {
