@@ -5,23 +5,28 @@ namespace App\Controller\Admin;
 use App\Entity\Media;
 use App\Entity\User;
 use App\Form\MediaType;
+use App\Service\MediaService;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
-use Symfony\Component\Filesystem\Path;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\CurrentUser;
+use Symfony\Component\Security\Http\Attribute\IsCsrfTokenValid;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
+use App\Exception\MediaDeletedFileNotRemovedException;
 
 class MediaController extends AbstractController
 {
     private ManagerRegistry $doctrine;
+    private MediaService $mediaService;
 
-    public function __construct(ManagerRegistry $doctrine)
+
+    public function __construct(ManagerRegistry $doctrine, MediaService $mediaService)
     {
         $this->doctrine = $doctrine;
+        $this->mediaService = $mediaService;
     }
 
     #[IsGranted('ROLE_ADMIN')]
@@ -76,14 +81,15 @@ class MediaController extends AbstractController
     }
 
     #[IsGranted('ROLE_ADMIN')]
-    #[Route('/admin/media/delete/{id}', name: 'admin_media_delete')]
-    public function delete(int $id, #[Autowire('%media_upload_dir%')] string $mediaUploadsDir): Response
+    #[Route('/admin/media/delete/{media}', name: 'admin_media_delete', methods: ['POST'])]
+    #[IsCsrfTokenValid('delete_media', '_token')]
+    public function delete(Media $media): Response
     {
-        $media = $this->doctrine->getRepository(Media::class)->find($id);
-        $this->doctrine->getManager()->remove($media);
-        $this->doctrine->getManager()->flush();
-        unlink(Path::join($mediaUploadsDir, basename($media->getPath())));
-
+        try {
+            $this->mediaService->deleteMedia($media);
+        } catch (MediaDeletedFileNotRemovedException $e) {
+            $this->addFlash('warning',  $e->getMessage());
+        }
         return $this->redirectToRoute('admin_media_index');
     }
 }

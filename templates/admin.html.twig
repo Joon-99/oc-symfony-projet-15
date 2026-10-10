@@ -1,5 +1,10 @@
 {% extends 'base.html.twig' %}
 
+{% block stylesheets %}
+    {{ parent() }}
+    <link href="{{ asset('admin.css') }}" rel="stylesheet">
+{% endblock %}
+
 {% block body %}
     <div class="container-fluid">
         <div class="row">

@@ -27,7 +27,10 @@
                         <td>{{ media.album.name ?? '' }}</td>
                     {% endif %}
                     <td>
-                        <a href="{{ path('admin_media_delete', {id: media.id}) }}" class="btn btn-danger">Supprimer</a>
+                        <form method="post" action="{{ path('admin_media_delete', {media: media.id}) }}">
+                            <input type="hidden" name="_token" value="{{ csrf_token('delete_media') }}">
+                            <button class="btn btn-danger" type="submit">Supprimer</button>
+                        </form>
                     </td>
                 </tr>
             {% endfor %}

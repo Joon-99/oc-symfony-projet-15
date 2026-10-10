@@ -18,10 +18,12 @@
             <tr>
                 <td>{{ guest.name }}</td>
                 <td> {{ guest.isActive() ? 'Oui' : 'Désactivé depuis le ' ~ guest.disabledAt|date('d/m/Y H:i') }}</td>
-                <td>
+                <td class="actions">
                     {% include 'admin/guest/_enableDisableGuestButton.html.twig' with {'guest': guest} %}
-                    {# <a href="{{ path('admin_guest_update', {id: guest.id}) }}" class="btn btn-warning">Modifier</a>
-                    <a href="{{ path('admin_guest_delete', {id: guest.id}) }}" class="btn btn-danger">Supprimer</a> #}
+                    <form action="{{ path('admin_guest_delete', {guest: guest.id}) }}" method="post">
+                        <input type="hidden" name="_token" value="{{ csrf_token('delete_guest') }}">
+                        <button type="submit" class="btn btn-danger">Supprimer</button>
+                    </form>
                 </td>
             </tr>
         {% endfor %}

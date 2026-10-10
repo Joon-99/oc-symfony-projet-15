@@ -2,7 +2,9 @@
 
 namespace App\Controller\Admin;
 
+use App\Entity\Media;
 use App\Entity\User;
+use App\Exception\MediaDeletedFileNotRemovedException;
 use App\Form\GuestType;
 use App\Repository\UserRepository;
 use App\Service\UserService;
@@ -40,7 +42,7 @@ class GuestController extends AbstractController
     #[IsCsrfTokenValid('disable_guest', '_token')]
     public function disableUser(User $toDisable): Response {
         if ($toDisable->isAdmin()) {
-            throw $this->createAccessDeniedException('Only guests can be disabled.');
+            throw $this->createAccessDeniedException("Seuls les invités peuvent être désactivés.");
         }
         $result = $this->userService->disableUser($toDisable);
         if ($result) {
@@ -57,7 +59,7 @@ class GuestController extends AbstractController
     #[IsCsrfTokenValid('enable_guest', '_token')]
     public function enableUser(User $toEnable): Response {
         if ($toEnable->isAdmin()) {
-            throw $this->createAccessDeniedException('Only guests can be enabled.');
+            throw $this->createAccessDeniedException("Seuls les invités peuvent être activés.");
         }
         $result = $this->userService->enableUser($toEnable);
         if ($result) {
@@ -82,5 +84,22 @@ class GuestController extends AbstractController
         return $this->render('admin/guest/add.html.twig', [
             'form' => $form,
         ]);
+    }
+
+    #[IsGranted('ROLE_ADMIN')]
+    #[Route('/admin/guest/delete/{guest}', name: 'admin_guest_delete', methods: ['POST'])]
+    #[IsCsrfTokenValid('delete_guest', '_token')]
+    public function deleteGuest(User $guest): Response {
+        if ($guest->isAdmin()) {
+            throw $this->createAccessDeniedException("Seuls les invités peuvent être supprimés.");
+        }
+        try {
+            $this->userService->deleteUser($guest);
+        } catch (MediaDeletedFileNotRemovedException $e) {
+            $this->addFlash('error', "Certains fichiers des medias associés à l'invité n'ont pas pu être supprimés.");
+        }
+        $this->addFlash('success', 'Invité supprimé avec succès.');
+
+        return $this->redirectToRoute('admin_guest');
     }
 }
