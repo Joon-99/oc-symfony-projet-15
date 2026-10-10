@@ -40,7 +40,7 @@ class HomeController extends AbstractController
     #[Route('/guests', name: 'guests')]
     public function guests(): Response
     {
-        $guests = $this->userService->getEnabledGuests();
+        $guests = $this->userService->getEnabledGuestsAndMediaCount();
 
         return $this->render('front/guests.html.twig', [
             'guests' => $guests,

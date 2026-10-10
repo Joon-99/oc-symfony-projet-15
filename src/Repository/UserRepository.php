@@ -34,14 +34,17 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
     }
 
        /**
-        * @return User[]
+        * @return list<array{user: User, mediaCount: int}>
         */
-       public function findByEnabledGuest(): array
+       public function findByEnabledGuestWithMediaCount(): array
        {
            return $this->createQueryBuilder('u')
+               ->select('u AS user, COUNT(m) AS mediaCount')
+               ->leftJoin('u.medias', 'm')
                ->andWhere('u.admin = :admin')
                ->andWhere('u.disabledAt IS NULL')
                ->setParameter('admin', false)
+               ->groupBy('u')
                ->orderBy('u.name', 'ASC')
                ->getQuery()
                ->getResult()

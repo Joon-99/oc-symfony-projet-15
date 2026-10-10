@@ -58,11 +58,11 @@ class UserService
     }
 
     /**
-     * @return list<User>
+     * @return list<array{user: User, mediaCount: int}>
      */
-    public function getEnabledGuests(): array
+    public function getEnabledGuestsAndMediaCount(): array
     {
-        return $this->userRepository->findByEnabledGuest();
+        return $this->userRepository->findByEnabledGuestWithMediaCount();
     }
 
     public function createGuestUser(User $transientUser): void
