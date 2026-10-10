@@ -80,3 +80,7 @@ Pour la norme de code, lancez `composer pcsfixer` (PHP CS Fixer - standard symfo
 Certaines améliorations de performance ont été réalisées sur les pages des invités, l'une suite à une optimisation de requête en BDD et l'autre suite à une mise en cache + compression des images. Vous trouverez un avant-après dans le dossier `performance`
 
 Voir [CONTRIBUTING.md](CONTRIBUTING.md) pour contribuer au projet.
+
+## Intégration continue
+
+La CI GitHub Actions exécute les tests avec PostgreSQL 16 et PHP 8.4, puis vérifie PHPStan et PHP CS Fixer.
