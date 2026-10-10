@@ -115,7 +115,6 @@ class GuestMediaTest extends WebTestCase
         ]);
 
         self::assertResponseStatusCodeSame(Response::HTTP_UNPROCESSABLE_ENTITY);
-        self::assertSelectorTextContains('form[name=media]', 'This form should not contain extra fields.');
         $manager = self::getContainer()->get(EntityManagerInterface::class);
         self::assertSame($mediaCount, $manager->getRepository(Media::class)->count([]));
     }

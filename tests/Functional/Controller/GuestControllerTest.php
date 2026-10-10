@@ -12,7 +12,9 @@ use Liip\ImagineBundle\Model\Binary;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+use Symfony\Component\PasswordHasher\PasswordHasherInterface;
 
 class GuestControllerTest extends WebTestCase
 {
@@ -67,6 +69,21 @@ class GuestControllerTest extends WebTestCase
         self::assertFalse($guest->isAdmin());
         self::assertTrue(self::getContainer()->get(UserPasswordHasherInterface::class)
             ->isPasswordValid($guest, 'Strong-Passphrase-729!'));
+    }
+
+    public function testOversizedPasswordIsRejectedWithoutCreatingGuest(): void
+    {
+        $email = 'oversized-password-'.uniqid().'@example.com';
+        $this->client->request('GET', '/admin/guest/add');
+        self::assertResponseIsSuccessful();
+        $this->client->submitForm('Créer', [
+            'guest[name]' => 'Guest with oversized password',
+            'guest[email]' => $email,
+            'guest[plainPassword]' => str_pad('Strong-Passphrase-729!', PasswordHasherInterface::MAX_PASSWORD_LENGTH + 1, 'x'),
+        ]);
+
+        self::assertResponseStatusCodeSame(Response::HTTP_UNPROCESSABLE_ENTITY);
+        self::assertNull(self::getContainer()->get(UserRepository::class)->findOneBy(['email' => $email]));
     }
 
     /** Protects against disable/enable actions not being persisted to the database */

@@ -2,9 +2,9 @@
 
 namespace App\Validator\Constraints;
 
+use Symfony\Component\PasswordHasher\PasswordHasherInterface;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Validator\Constraints\Compound;
-use Symfony\Component\Validator\Constraints\PasswordStrength;
 
 #[\Attribute]
 class ValidPassword extends Compound
@@ -14,7 +14,15 @@ class ValidPassword extends Compound
         return [
             new Assert\Sequentially([
                 new Assert\NotBlank(),
-                new PasswordStrength(minScore: PasswordStrength::STRENGTH_STRONG),
+                /* Matches Symfony's password hasher limit. DoS protection related.
+                 *  @see \Symfony\Component\PasswordHasher\Hasher\CheckPasswordLengthTrait::isPasswordTooLong()
+                 */
+                new Assert\Length(
+                    max: PasswordHasherInterface::MAX_PASSWORD_LENGTH,
+                    countUnit: Assert\Length::COUNT_BYTES,
+                    maxMessage: 'Le mot de passe ne peut pas dépasser {{ limit }} octets.',
+                ),
+                new Assert\PasswordStrength(minScore: Assert\PasswordStrength::STRENGTH_STRONG),
             ]),
         ];
     }
