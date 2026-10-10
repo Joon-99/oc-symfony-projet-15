@@ -2,8 +2,11 @@
 
 namespace App\Tests\Functional\Controller;
 
+use App\Entity\Album;
+use App\Entity\Media;
 use App\Entity\User;
 use App\Repository\UserRepository;
+use App\Service\UserService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
@@ -61,6 +64,58 @@ class HomeControllerTest extends WebTestCase
         $this->client->request('GET', '/guest/'.$guest->getId());
 
         self::assertResponseIsSuccessful();
+    }
+
+    public function testAlbumHidesDisabledGuestPhotosAndRestoresThemWhenEnabled(): void
+    {
+        $manager = self::getContainer()->get(EntityManagerInterface::class);
+        $admin = self::getContainer()->get(UserRepository::class)->findOneBy(['admin' => true]);
+        self::assertNotNull($admin);
+        $guest = $this->createGuest('Guest with album photo');
+        $otherGuest = $this->createGuest('Other active guest with album photo');
+        $album = (new Album())->setName('Guest visibility test album');
+        $manager->persist($album);
+
+        foreach ([
+            'Administrator photo' => $admin,
+            'Guest photo to hide' => $guest,
+            'Other active guest photo' => $otherGuest,
+            'Unowned photo' => null,
+        ] as $title => $owner) {
+            $manager->persist((new Media())
+                ->setAlbum($album)
+                ->setUser($owner)
+                ->setTitle($title)
+                ->setPath('images/logo.png'));
+        }
+        $manager->flush();
+        $albumId = $album->getId();
+        $guestId = $guest->getId();
+
+        $this->client->request('GET', '/portfolio/'.$albumId);
+        self::assertResponseIsSuccessful();
+        self::assertSelectorCount(4, '.media-title');
+
+        $guest = self::getContainer()->get(UserRepository::class)->find($guestId);
+        self::assertNotNull($guest);
+        self::getContainer()->get(UserService::class)->disableUser($guest);
+
+        $this->client->request('GET', '/portfolio/'.$albumId);
+        self::assertResponseIsSuccessful();
+        self::assertSelectorCount(3, '.media-title');
+        self::assertSelectorTextNotContains('main', 'Guest photo to hide');
+        foreach (['Administrator photo', 'Other active guest photo', 'Unowned photo'] as $title) {
+            self::assertSelectorTextContains('main', $title);
+        }
+
+        $guest = self::getContainer()->get(UserRepository::class)->find($guestId);
+        self::assertNotNull($guest);
+        self::getContainer()->get(UserService::class)->enableUser($guest);
+
+        $this->client->request('GET', '/portfolio/'.$albumId);
+        self::assertResponseIsSuccessful();
+        self::assertSelectorCount(4, '.media-title');
+        self::assertSelectorTextContains('main', 'Guest photo to hide');
     }
 
     private function createGuest(string $name): User

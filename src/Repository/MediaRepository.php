@@ -24,7 +24,9 @@ class MediaRepository extends ServiceEntityRepository
     public function findByAlbum(Album $value): array
     {
         return $this->createQueryBuilder('m')
+            ->leftJoin('m.user', 'u')
             ->andWhere('m.album = :val')
+            ->andWhere('u.disabledAt IS NULL OR u.admin = true')
             ->setParameter('val', $value)
             ->orderBy('m.id', \SortDirection::Ascending)
             ->getQuery()
