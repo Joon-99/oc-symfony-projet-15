@@ -40,13 +40,16 @@ class MediaController extends AbstractController
             $criteria['user'] = $user;
         }
 
+        // Limit the requested page to the last available page before calculating the offset.
+        $total = $this->doctrine->getRepository(Media::class)->count($criteria);
+        $page = min($page, max(1, (int) ceil($total / 25)));
+
         $medias = $this->doctrine->getRepository(Media::class)->findBy(
             $criteria,
             ['id' => 'ASC'],
             25,
             25 * ($page - 1)
         );
-        $total = $this->doctrine->getRepository(Media::class)->count($criteria);
 
         return $this->render('admin/media/index.html.twig', [
             'medias' => $medias,

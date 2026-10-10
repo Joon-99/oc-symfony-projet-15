@@ -172,6 +172,12 @@ class GuestMediaTest extends WebTestCase
         self::assertResponseIsSuccessful();
         self::assertSelectorCount($mediaCount, 'tbody tr');
         self::assertSelectorNotExists('.pagination');
+
+        $this->client->request('GET', '/admin/media?page='.PHP_INT_MAX);
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorCount($mediaCount, 'tbody tr');
+        self::assertSelectorNotExists('.pagination');
     }
 
     /** @return iterable<string, array{int}> */
@@ -180,6 +186,44 @@ class GuestMediaTest extends WebTestCase
         yield 'empty gallery' => [0];
         yield 'one image' => [1];
         yield 'full first page' => [25];
+    }
+
+    #[DataProvider('galleryRoles')]
+    public function testOutOfRangePageShowsLastPage(bool $admin): void
+    {
+        for ($number = 1; $number <= 26; ++$number) {
+            $this->createMedia($this->guest, 'Pagination boundary image '.$number);
+        }
+        $user = $admin ? $this->createUser('Pagination boundary admin', true) : $this->guest;
+        $this->client->loginUser($user);
+        $criteria = $admin ? [] : ['user' => $this->guest];
+        $total = self::getContainer()->get(EntityManagerInterface::class)
+            ->getRepository(Media::class)->count($criteria);
+        $lastPage = (int) ceil($total / 25);
+
+        $crawler = $this->client->request('GET', '/admin/media?page='.$lastPage);
+        self::assertResponseIsSuccessful();
+        self::assertSelectorCount($total - 25 * ($lastPage - 1), 'tbody tr');
+        self::assertSelectorTextContains('.page-item.active', (string) $lastPage);
+        $rows = $crawler->filter('tbody')->text();
+        $links = $crawler->filter('.pagination a')->extract(['href']);
+        self::assertLessThanOrEqual(9, count($links));
+
+        foreach ([$lastPage + 1, 999999, PHP_INT_MAX] as $page) {
+            $crawler = $this->client->request('GET', '/admin/media?page='.$page);
+
+            self::assertResponseIsSuccessful();
+            self::assertSame($rows, $crawler->filter('tbody')->text());
+            self::assertSame($links, $crawler->filter('.pagination a')->extract(['href']));
+            self::assertSelectorTextContains('.page-item.active', (string) $lastPage);
+        }
+    }
+
+    /** @return iterable<string, array{bool}> */
+    public static function galleryRoles(): iterable
+    {
+        yield 'guest' => [false];
+        yield 'administrator' => [true];
     }
 
     /** Protects page zero and negative page numbers from producing an empty or broken gallery. */
