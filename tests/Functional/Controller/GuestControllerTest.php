@@ -99,6 +99,42 @@ class GuestControllerTest extends WebTestCase
         self::assertResponseStatusCodeSame(403);
     }
 
+    #[DataProvider('adminProtectionRoutes')]
+    public function testAdministratorAccountCannotBeDisabledEnabledOrDeleted(string $action): void
+    {
+        $admin = self::getContainer()->get(UserRepository::class)->findOneBy(['admin' => true]);
+        self::assertNotNull($admin);
+        $otherGuest = $this->createGuest('Guest used to borrow a valid CSRF token');
+        if ('enable' === $action) {
+            $otherGuest = $this->disableGuest($otherGuest); // only a disabled guest has an "enable" form to borrow a token from
+        }
+
+        // The CSRF token is tied to the action name, not to a specific guest id, so we can
+        // borrow the token rendered for another guest's form to attempt the same action on the admin.
+        $crawler = $this->client->request('GET', '/admin/guest');
+        $form = $crawler->filter('form[action="/admin/guest/'.$action.'/'.$otherGuest->getId().'"]')->form();
+        $token = $form->get('_token')->getValue();
+
+        $this->client->request('POST', '/admin/guest/'.$action.'/'.$admin->getId(), ['_token' => $token]);
+
+        self::assertResponseStatusCodeSame(403);
+        $manager = self::getContainer()->get(EntityManagerInterface::class);
+        $manager->clear();
+        $admin = $manager->find(User::class, $admin->getId());
+        self::assertNotNull($admin);
+        self::assertTrue($admin->isActive());
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function adminProtectionRoutes(): iterable
+    {
+        yield 'disable' => ['disable'];
+        yield 'enable' => ['enable'];
+        yield 'delete' => ['delete'];
+    }
+
     #[DataProvider('mediaCounts')]
     public function testDeletingGuestRemovesMediaAndFilesButKeepsAlbum(int $mediaCount): void
     {
@@ -182,6 +218,14 @@ class GuestControllerTest extends WebTestCase
         $manager = self::getContainer()->get(EntityManagerInterface::class);
         $manager->persist($guest);
         $manager->flush();
+
+        return $guest;
+    }
+
+    private function disableGuest(User $guest): User
+    {
+        $guest->setDisabledAt(new \DateTimeImmutable());
+        self::getContainer()->get(EntityManagerInterface::class)->flush();
 
         return $guest;
     }
