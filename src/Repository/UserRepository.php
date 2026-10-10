@@ -5,6 +5,7 @@ namespace App\Repository;
 use App\Entity\User;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use SortDirection;
 use Symfony\Component\Security\Core\Exception\UnsupportedUserException;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\PasswordUpgraderInterface;
@@ -45,7 +46,7 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
                ->andWhere('u.disabledAt IS NULL')
                ->setParameter('admin', false)
                ->groupBy('u')
-               ->orderBy('u.name', 'ASC')
+               ->orderBy('u.name', SortDirection::Ascending)
                ->getQuery()
                ->getResult()
            ;
@@ -60,7 +61,7 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
         return $this->createQueryBuilder('u')
             ->andWhere('u.admin = :val')
             ->setParameter('val', $isAdmin)
-            ->orderBy('u.name', 'ASC')
+            ->orderBy('u.name', SortDirection::Ascending)
             ->getQuery()
             ->getResult()
         ;
