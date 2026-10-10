@@ -21,6 +21,7 @@ class MediaImageFileTest extends WebTestCase
         self::assertTrue(copy($projectDir.'/tests/Resources/test-upload-media.jpg', $this->originalPath));
     }
 
+    /** Protects against serving originals instead of WebP or mutating the source image. */
     public function testMediaIsServedAsWebpWithoutChangingOriginal(): void
     {
         $originalHash = hash_file('sha256', $this->originalPath);

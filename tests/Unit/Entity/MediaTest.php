@@ -27,35 +27,35 @@ class MediaTest extends TestCase
         $this->validator = Validation::createValidatorBuilder()->enableAttributeMapping()->getValidator();
     }
 
+    /** Protects against media accessors returning or storing the wrong values. */
     public function testAccessors(): void
     {
-        $mediaData = [
-            'user' => new User(),
-            'album' => new Album(),
-            'path' => 'destination/path/to/media',
-            'title' => 'Media Title',
-            'file' => $this->createStub(UploadedFile::class),
-        ];
+        $user = new User();
+        $album = new Album();
+        $path = 'destination/path/to/media';
+        $title = 'Media Title';
+        $file = $this->createStub(UploadedFile::class);
         $media = new Media();
 
         $this->assertNull($media->getId());
 
-        $media->setUser($mediaData['user']);
-        $this->assertSame($mediaData['user'], $media->getUser());
+        $media->setUser($user);
+        $this->assertSame($user, $media->getUser());
 
-        $media->setAlbum($mediaData['album']);
-        $this->assertSame($mediaData['album'], $media->getAlbum());
+        $media->setAlbum($album);
+        $this->assertSame($album, $media->getAlbum());
 
-        $media->setPath($mediaData['path']);
-        $this->assertSame($mediaData['path'], $media->getPath());
+        $media->setPath($path);
+        $this->assertSame($path, $media->getPath());
 
-        $media->setTitle($mediaData['title']);
-        $this->assertSame($mediaData['title'], $media->getTitle());
+        $media->setTitle($title);
+        $this->assertSame($title, $media->getTitle());
 
-        $media->setFile($mediaData['file']);
-        $this->assertSame($mediaData['file'], $media->getFile());
+        $media->setFile($file);
+        $this->assertSame($file, $media->getFile());
     }
 
+    /** Protects against image-size limits allowing oversized files or rejecting the boundary. */
     #[DataProvider('imageSizeProvider')]
     public function testImageSizeValidation(int $size, ?string $expectedViolationCode): void
     {
@@ -83,6 +83,7 @@ class MediaTest extends TestCase
         ];
     }
 
+    /** Protects against disallowed image formats being accepted or valid formats rejected. */
     #[DataProvider('imageTypeProvider')]
     public function testImageTypeValidation(string $mimeType, ?string $expectedViolationCode): void
     {
@@ -123,9 +124,7 @@ class MediaTest extends TestCase
         ];
     }
 
-    /**
-     * A real JPEG header followed by garbage passes MIME sniffing; detectCorrupted catches it.
-     */
+    /** Protects against forged JPEG headers bypassing corrupt-image validation. */
     public function testForgedImageHeaderIsRejected(): void
     {
         $jpegStartSequence = "\xFF\xD8\xFF";
@@ -137,9 +136,7 @@ class MediaTest extends TestCase
         $this->assertContainsViolationCode(Image::SIZE_NOT_DETECTED_ERROR, $violations);
     }
 
-    /**
-     * Ensures that Media::$file, expected to be be transient, does not require UploadedFile on validation.
-     */
+    /** Protects against the optional transient upload field becoming mandatory during validation. */
     public function testFileIsOptionalOnValidation(): void
     {
         $this->assertCount(0, $this->validator->validateProperty(new Media(), 'file'));

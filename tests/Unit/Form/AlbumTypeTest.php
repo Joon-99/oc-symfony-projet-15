@@ -30,6 +30,7 @@ class AlbumTypeTest extends TypeTestCase
         ];
     }
 
+    /** Protects against valid album submissions failing to populate the model. */
     public function testSubmitValidData(): void
     {
         $formData = [
@@ -51,6 +52,8 @@ class AlbumTypeTest extends TypeTestCase
     }
 
     /**
+     * Protects against blank or whitespace-only album names passing validation.
+     *
      * @param array<string, string> $formData
      */
     #[DataProvider('invalidDataProvider')]
@@ -75,6 +78,7 @@ class AlbumTypeTest extends TypeTestCase
         ];
     }
 
+    /** Protects the album form's user-facing field label from accidental changes. */
     public function testFieldsHaveExpectedLabels(): void
     {
         $form = $this->factory->create(AlbumType::class, new Album());
@@ -83,6 +87,7 @@ class AlbumTypeTest extends TypeTestCase
         $this->assertSame('Nom', $view->children['name']->vars['label']);
     }
 
+    /** Protects against existing album names being omitted from the edit form. */
     public function testExistingAlbumHasExpectedData(): void
     {
         $albumName = 'Existing Album';

@@ -22,6 +22,7 @@ class AlbumControllerTest extends WebTestCase
         $this->client->loginUser($admin);
     }
 
+    /** Protects against the admin album list omitting persisted albums. */
     public function testIndexDisplaysAlbums(): void
     {
         $album = (new Album())->setName('Album controller index test');
@@ -35,6 +36,7 @@ class AlbumControllerTest extends WebTestCase
         self::assertSelectorTextContains('tbody', 'Album controller index test');
     }
 
+    /** Protects against album creation failing to persist submitted data. */
     public function testAddCreatesAlbum(): void
     {
         $name = 'Album controller add test';
@@ -50,6 +52,7 @@ class AlbumControllerTest extends WebTestCase
         self::assertNotNull($album);
     }
 
+    /** Protects against album edits failing to persist the renamed value. */
     public function testUpdateChangesAlbumName(): void
     {
         $manager = self::getContainer()->get(EntityManagerInterface::class);
@@ -71,6 +74,7 @@ class AlbumControllerTest extends WebTestCase
         self::assertSame('Album after update', $updatedAlbum->getName());
     }
 
+    /** Protects against album deletion leaving the record in storage. */
     public function testDeleteRemovesAlbum(): void
     {
         $manager = self::getContainer()->get(EntityManagerInterface::class);

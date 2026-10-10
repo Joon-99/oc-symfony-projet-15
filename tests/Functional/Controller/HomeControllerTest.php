@@ -18,6 +18,7 @@ class HomeControllerTest extends WebTestCase
         $this->client = static::createClient();
     }
 
+    /** Protects against active guest profiles becoming inaccessible to visitors. */
     public function testActiveGuestProfileIsPubliclyVisible(): void
     {
         $guest = $this->createGuest('Public guest profile test');
@@ -28,6 +29,7 @@ class HomeControllerTest extends WebTestCase
         self::assertSelectorTextContains('h3', $guest->getName());
     }
 
+    /** Protects against administrator accounts being exposed as public guest profiles. */
     public function testAdministratorProfileIsNotPubliclyViewable(): void
     {
         $admin = self::getContainer()->get(UserRepository::class)->findOneBy(['admin' => true]);
@@ -38,6 +40,7 @@ class HomeControllerTest extends WebTestCase
         self::assertResponseStatusCodeSame(404);
     }
 
+    /** Protects against disabled guest profiles remaining visible to anonymous visitors. */
     public function testDisabledGuestProfileIsHiddenFromAnonymousVisitors(): void
     {
         $guest = $this->disableGuest($this->createGuest('Disabled guest profile test'));
@@ -47,6 +50,7 @@ class HomeControllerTest extends WebTestCase
         self::assertResponseStatusCodeSame(404);
     }
 
+    /** Protects admins from losing access to disabled guest profiles they manage. */
     public function testDisabledGuestProfileRemainsVisibleToAdmin(): void
     {
         $guest = $this->disableGuest($this->createGuest('Disabled guest visible to admin test'));

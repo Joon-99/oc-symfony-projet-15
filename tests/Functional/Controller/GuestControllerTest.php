@@ -29,7 +29,8 @@ class GuestControllerTest extends WebTestCase
         $this->client->loginUser($admin);
     }
 
-    public function testIndexListsGuestsButNotAdministrators(): void
+    /** Protects against hiding guests or exposing administrator accounts in guest listings. */
+    public function testIndexListsGuestsButNotAdmins(): void
     {
         $guest = $this->createGuest('Guest shown in admin list');
         $admin = self::getContainer()->get(UserRepository::class)->findOneBy(['admin' => true]);
@@ -42,6 +43,7 @@ class GuestControllerTest extends WebTestCase
         self::assertSelectorTextNotContains('tbody', $admin->getName());
     }
 
+    /** Protects against guest creation assigning admin privileges or storing a bad password. */
     public function testAdminCanCreateGuest(): void
     {
         $email = 'controller-test-'.uniqid().'@example.com';
@@ -62,6 +64,7 @@ class GuestControllerTest extends WebTestCase
             ->isPasswordValid($guest, 'Strong-Passphrase-729!'));
     }
 
+    /** Protects against disable/enable actions not being persisted to the database */
     public function testAdminCanDisableAndReenableGuest(): void
     {
         $guest = $this->createGuest('Guest to disable and reenable');
@@ -89,6 +92,7 @@ class GuestControllerTest extends WebTestCase
         self::assertTrue($guest->isActive());
     }
 
+    /** Protects guest administration from access by non-admin users. */
     public function testGuestCannotAccessGuestAdministration(): void
     {
         $guest = $this->createGuest('Guest without admin access');
@@ -99,6 +103,7 @@ class GuestControllerTest extends WebTestCase
         self::assertResponseStatusCodeSame(403);
     }
 
+    /** Protects the administrator account from destructive guest-management actions. */
     #[DataProvider('adminProtectionRoutes')]
     public function testAdministratorAccountCannotBeDisabledEnabledOrDeleted(string $action): void
     {
@@ -135,6 +140,7 @@ class GuestControllerTest extends WebTestCase
         yield 'delete' => ['delete'];
     }
 
+    /** Protects guest deletion from leaving related media or files, or deleting shared albums. */
     #[DataProvider('mediaCounts')]
     public function testDeletingGuestRemovesMediaAndFilesButKeepsAlbum(int $mediaCount): void
     {
@@ -184,6 +190,7 @@ class GuestControllerTest extends WebTestCase
         yield 'with two media files' => [2];
     }
 
+    /** Protects guest records from deletion through GET or invalid-CSRF requests. */
     #[DataProvider('rejectedDeleteRequests')]
     public function testRejectedDeleteRequestKeepsGuest(string $method, string $token, int $status): void
     {

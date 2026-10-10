@@ -37,6 +37,7 @@ class MediaTypeSubmissionTest extends WebTestCase
         $this->loginUser('ina@zaoui.com');
     }
 
+    /** Protects against required media fields disappearing from the upload form. */
     public function testFormLoads(): void
     {
         $this->client->request('GET', '/admin/media/add');
@@ -47,6 +48,7 @@ class MediaTypeSubmissionTest extends WebTestCase
         $this->assertSelectorExists('#media_file');
     }
 
+    /** Protects against valid uploads failing to persist media metadata and image files. */
     public function testFormSubmission(): void
     {
         $userTest = $this->userRepository->findOneBy(['email' => 'invite+0@example.com']);
@@ -102,6 +104,7 @@ class MediaTypeSubmissionTest extends WebTestCase
         $this->assertSelectorExists('button:contains("Déconnexion")');
     }
 
+    /** Protects against invalid or oversized uploads being accepted or saved. */
     #[DataProvider('invalidUploadProvider')]
     public function testInvalidUploadIsRejected(bool $oversized, string $message): void
     {

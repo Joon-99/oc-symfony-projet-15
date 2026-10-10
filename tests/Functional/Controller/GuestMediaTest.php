@@ -28,6 +28,7 @@ class GuestMediaTest extends WebTestCase
         $this->guest = $this->createUser('Media test guest');
     }
 
+    /** Protects media management from anonymous access or unintended data changes. */
     #[DataProvider('anonymousRequests')]
     public function testAnonymousVisitorCannotAccessMediaManagement(string $method, string $url): void
     {
@@ -53,6 +54,7 @@ class GuestMediaTest extends WebTestCase
         yield 'submit upload' => ['POST', '/admin/media/add'];
     }
 
+    /** Protects guest uploads from assigning another owner or changing shared album data. */
     public function testGuestCanUploadAnImageOnlyForThemselves(): void
     {
         $this->client->loginUser($this->guest);
@@ -85,6 +87,7 @@ class GuestMediaTest extends WebTestCase
         );
     }
 
+    /** Protects guest uploads from forged owner or album fields. */
     #[DataProvider('forgedFields')]
     public function testGuestCannotChooseAnOwnerOrAlbum(string $field): void
     {
@@ -119,6 +122,7 @@ class GuestMediaTest extends WebTestCase
         yield 'an album' => ['album'];
     }
 
+    /** Protects guest media listings and pagination from exposing other users' files or admin links. */
     public function testGuestListAndPaginationContainOnlyTheirOwnMedia(): void
     {
         $otherGuest = $this->createUser('Other guest');
@@ -150,6 +154,7 @@ class GuestMediaTest extends WebTestCase
         self::assertSelectorNotExists('a[href="/admin/media?page=3"]');
     }
 
+    /** Protects empty, partial, and full single-page galleries from showing needless pagination. */
     #[DataProvider('singlePageMediaCounts')]
     public function testGuestGalleryHidesPaginationForAtMostOnePage(int $mediaCount): void
     {
@@ -173,6 +178,7 @@ class GuestMediaTest extends WebTestCase
         yield 'full first page' => [25];
     }
 
+    /** Protects page zero and negative page numbers from producing an empty or broken gallery. */
     #[DataProvider('nonpositivePages')]
     public function testGuestNonpositivePageShowsFirstPage(int $page): void
     {
@@ -193,6 +199,7 @@ class GuestMediaTest extends WebTestCase
         yield 'negative' => [-1];
     }
 
+    /** Protects authorized media deletion from leaving orphaned upload files. */
     public function testGuestCanDeleteTheirOwnMediaAndFile(): void
     {
         $media = $this->createMedia($this->guest, 'My image');
@@ -210,6 +217,7 @@ class GuestMediaTest extends WebTestCase
         self::assertFileDoesNotExist($path);
     }
 
+    /** Protects other guests' and unowned media records and files from guest deletion. */
     #[DataProvider('protectedOwners')]
     public function testGuestCannotDeleteMediaTheyDoNotOwn(bool $hasOwner): void
     {
@@ -243,6 +251,7 @@ class GuestMediaTest extends WebTestCase
         yield 'unowned portfolio media' => [false];
     }
 
+    /** Protects album administration and stored albums from guest access or mutation. */
     public function testGuestCannotManageAlbums(): void
     {
         $album = (new Album())->setName('Protected album');
@@ -270,6 +279,7 @@ class GuestMediaTest extends WebTestCase
         self::assertSame('Protected album', $manager->find(Album::class, $albumId)?->getName());
     }
 
+    /** Protects admins from losing access to guest-owned and unowned media management. */
     public function testAdminCanStillListAndDeleteGuestAndUnownedMedia(): void
     {
         $admin = $this->createUser('Media test admin', true);
@@ -299,6 +309,7 @@ class GuestMediaTest extends WebTestCase
         }
     }
 
+    /** Protects enabled guest accounts from losing login or media-upload access. */
     public function testEnabledGuestCanLogInAndAccessTheirMedia(): void
     {
         $hasher = self::getContainer()->get(UserPasswordHasherInterface::class);
@@ -319,6 +330,7 @@ class GuestMediaTest extends WebTestCase
         self::assertResponseIsSuccessful();
     }
 
+    /** Protects disabled accounts from authenticating or accessing media uploads. */
     public function testDisabledGuestCannotLogInOrUpload(): void
     {
         $hasher = self::getContainer()->get(UserPasswordHasherInterface::class);

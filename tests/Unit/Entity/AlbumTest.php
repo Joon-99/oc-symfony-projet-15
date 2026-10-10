@@ -7,16 +7,14 @@ use PHPUnit\Framework\TestCase;
 
 class AlbumTest extends TestCase
 {
+    /** Protects against album identifiers or names returning incorrect values. */
     public function testAccessors(): void
     {
-        $albumData = [
-            'name' => 'Test Album',
-        ];
         $album = new Album();
 
         $this->assertNull($album->getId());
 
-        $album->setName($albumData['name']);
-        $this->assertSame($albumData['name'], $album->getName());
+        $album->setName('Test Album');
+        $this->assertSame('Test Album', $album->getName());
     }
 }

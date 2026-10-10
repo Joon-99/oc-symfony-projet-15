@@ -9,12 +9,14 @@ use PHPUnit\Framework\TestCase;
 
 class UserTest extends TestCase
 {
+    /** Protects against users losing the default non-admin role. */
     public function testDefaultRole(): void
     {
         $user = new User();
         $this->assertSame(['ROLE_USER'], $user->getRoles());
     }
 
+    /** Protects against admin status and its derived roles becoming inconsistent. */
     public function testAdminRole(): void
     {
         $user = new User();
@@ -27,6 +29,7 @@ class UserTest extends TestCase
         $this->assertSame(['ROLE_USER'], $user->getRoles());
     }
 
+    /** Protects against login identifiers differing from the user's email. */
     public function testUserIdentifier(): void
     {
         $email = 'test@example.com';
@@ -35,39 +38,35 @@ class UserTest extends TestCase
         $this->assertSame($email, $user->getUserIdentifier());
     }
 
+    /** Protects against new users receiving an unexpected media collection. */
     public function testInitialMedias(): void
     {
         $user = new User();
         $this->assertTrue($user->getMedias()->isEmpty());
     }
 
+    /** Protects against user accessors returning or storing the wrong values. */
     public function testAccessors(): void
     {
         $testMedia = (new Media())->setPath('path/to/media')->setTitle('Media Title');
-        $userData = [
-            'email' => 'test@example.com',
-            'password' => 'password',
-            'name' => 'Test User',
-            'description' => 'Test description',
-            'medias' => new ArrayCollection([$testMedia]),
-        ];
+        $medias = new ArrayCollection([$testMedia]);
         $user = new User();
 
         $this->assertNull($user->getId());
 
-        $user->setEmail($userData['email']);
-        $this->assertSame($userData['email'], $user->getEmail());
+        $user->setEmail('test@example.com');
+        $this->assertSame('test@example.com', $user->getEmail());
 
-        $user->setPassword($userData['password']);
-        $this->assertSame($userData['password'], $user->getPassword());
+        $user->setPassword('password');
+        $this->assertSame('password', $user->getPassword());
 
-        $user->setName($userData['name']);
-        $this->assertSame($userData['name'], $user->getName());
+        $user->setName('Test User');
+        $this->assertSame('Test User', $user->getName());
 
-        $user->setDescription($userData['description']);
-        $this->assertSame($userData['description'], $user->getDescription());
+        $user->setDescription('Test description');
+        $this->assertSame('Test description', $user->getDescription());
 
-        $user->setMedias($userData['medias']);
-        $this->assertSame($userData['medias'], $user->getMedias());
+        $user->setMedias($medias);
+        $this->assertSame($medias, $user->getMedias());
     }
 }
