@@ -25,8 +25,9 @@ class MediaType extends AbstractType
                 'label' => 'Image',
                 'help' => 'Image uniquement (JPEG, PNG, GIF, WEBP) - 2 Mo maximum.',
                 'constraints' => [
-                    new NotNull(message: "Veuillez sélectionner une image.")
-                ]
+                    // to prevent requests from submitting without a file when bypassing 'required'
+                    new NotNull(message: 'Veuillez sélectionner une image.'),
+                ],
             ])
             ->add('title', TextType::class, [
                 'label' => 'Titre',
