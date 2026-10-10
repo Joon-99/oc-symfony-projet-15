@@ -11,6 +11,7 @@ use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\DomCrawler\Field\FileFormField;
 use Symfony\Component\Filesystem\Path;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
+use Symfony\Component\HttpFoundation\Response;
 
 class MediaTypeSubmissionTest extends WebTestCase
 {
@@ -127,13 +128,27 @@ class MediaTypeSubmissionTest extends WebTestCase
                 'media' => ['file' => new UploadedFile($path, 'photo.jpg', 'image/jpeg', null, true)],
             ]);
 
-            $this->assertResponseIsSuccessful();
+            $this->assertResponseStatusCodeSame(Response::HTTP_UNPROCESSABLE_ENTITY);
             $this->assertSelectorTextContains('form[name=media]', $message);
             $this->assertNull($this->mediaRepository->findOneBy(['title' => $title]));
             $this->assertFileExists($path);
         } finally {
             unlink($path);
         }
+    }
+
+    public function testMissingUploadIsRejected(): void
+    {
+        $title = 'Missing upload PHPUnit '.uniqid();
+        $mediaCount = $this->mediaRepository->count([]);
+        $crawler = $this->client->request('GET', '/admin/media/add');
+        $form = $crawler->filter('form[name=media]')->form(['media[title]' => $title]);
+
+        $this->client->request($form->getMethod(), $form->getUri(), $form->getPhpValues());
+
+        $this->assertResponseStatusCodeSame(Response::HTTP_UNPROCESSABLE_ENTITY);
+        $this->assertSame($mediaCount, $this->mediaRepository->count([]));
+        $this->assertNull($this->mediaRepository->findOneBy(['title' => $title]));
     }
 
     /**

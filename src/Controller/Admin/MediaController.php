@@ -79,7 +79,7 @@ class MediaController extends AbstractController
             return $this->redirectToRoute('media_index');
         }
 
-        return $this->render('admin/media/add.html.twig', ['form' => $form->createView()]);
+        return $this->render('admin/media/add.html.twig', ['form' => $form]);
     }
 
     #[IsGranted('ROLE_USER')]

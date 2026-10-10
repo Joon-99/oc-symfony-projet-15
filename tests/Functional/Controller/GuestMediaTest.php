@@ -12,6 +12,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 class GuestMediaTest extends WebTestCase
@@ -113,7 +114,7 @@ class GuestMediaTest extends WebTestCase
             'media' => ['file' => $this->uploadedImage()],
         ]);
 
-        self::assertResponseIsSuccessful();
+        self::assertResponseStatusCodeSame(Response::HTTP_UNPROCESSABLE_ENTITY);
         self::assertSelectorTextContains('form[name=media]', 'This form should not contain extra fields.');
         $manager = self::getContainer()->get(EntityManagerInterface::class);
         self::assertSame($mediaCount, $manager->getRepository(Media::class)->count([]));

@@ -11,6 +11,7 @@ use Symfony\Component\Form\Extension\Core\Type\FileType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
+use Symfony\Component\Validator\Constraints\NotNull;
 
 /**
  * @extends AbstractType<Media>
@@ -23,6 +24,9 @@ class MediaType extends AbstractType
             ->add('file', FileType::class, [
                 'label' => 'Image',
                 'help' => 'Image uniquement (JPEG, PNG, GIF, WEBP) - 2 Mo maximum.',
+                'constraints' => [
+                    new NotNull(message: "Veuillez sélectionner une image.")
+                ]
             ])
             ->add('title', TextType::class, [
                 'label' => 'Titre',
