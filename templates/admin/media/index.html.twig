@@ -20,7 +20,7 @@
         <tbody>
             {% for media in medias %}
                 <tr>
-                    <td><img src="{{ asset(media.path) }}" width="75" /></td>
+                    <td><img src="{{ media.path | imagine_filter('compressed') }}" width="75" /></td>
                     <td>{{ media.title }}</td>
                     {% if is_granted('ROLE_ADMIN') %}
                         <td>{{ media.user.name ?? '' }}</td>

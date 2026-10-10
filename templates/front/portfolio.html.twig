@@ -21,7 +21,7 @@
             <div class="row">
                 {% for media in medias %}
                     <div class="col-4 media mb-4">
-                        <img class="w-100" src="{{ asset(media.path) }}" alt="{{ media.title }}">
+                        <img class="w-100" src="{{ media.path | imagine_filter('compressed') }}" alt="{{ media.title }}">
                         <p class="text-center mb-0 mt-2 media-title">{{ media.title }}</p>
                     </div>
                 {% endfor %}

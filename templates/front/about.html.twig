@@ -3,7 +3,7 @@
 {% block front %}
     <div class="row align-items-stretch justify-content-center">
         <div class="col-4">
-            <img src="{{ asset('images/ina.png') }}" alt="Ina Zaoui" class="about-img w-100">
+            <img src="{{ 'images/ina.png' | imagine_filter('compressed') }}" alt="Ina Zaoui" class="about-img w-100">
         </div>
         <div class="col-4">
             <div class="d-flex flex-column justify-content-center align-items-start h-100 gap-3 ps-5">

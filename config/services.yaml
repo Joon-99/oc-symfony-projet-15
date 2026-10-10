@@ -27,3 +27,10 @@ services:
         tags: ['controller.service_arguments']
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
+    app.image_format_resolver:
+        class: Liip\ImagineBundle\Imagine\Cache\Resolver\FormatExtensionResolver
+        arguments:
+            - '@liip_imagine.cache.resolver.default'
+            - '@liip_imagine.filter.configuration'
+        tags:
+            - { name: liip_imagine.cache.resolver, resolver: format_extension }

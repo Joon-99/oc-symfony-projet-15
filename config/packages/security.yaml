@@ -34,6 +34,9 @@ security:
         - { route: portfolio, roles: PUBLIC_ACCESS }
         - { route: about, roles: PUBLIC_ACCESS }
 
+        - { path: ^/media/cache/resolve/compressed/uploads/, roles: PUBLIC_ACCESS }
+        - { path: ^/media/cache/resolve/compressed/images/, roles: PUBLIC_ACCESS }
+
         - { route: admin_album_index, roles: ROLE_ADMIN }
         - { route: admin_album_add, roles: ROLE_ADMIN }
         - { route: admin_album_update, roles: ROLE_ADMIN }
