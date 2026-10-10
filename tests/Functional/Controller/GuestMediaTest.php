@@ -5,7 +5,6 @@ namespace App\Tests\Functional\Controller;
 use App\Entity\Album;
 use App\Entity\Media;
 use App\Entity\User;
-use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
@@ -103,7 +102,7 @@ class GuestMediaTest extends WebTestCase
         self::assertResponseIsSuccessful();
         $form = $crawler->filter('form[name=media]')->form(['media[title]' => 'Forged upload']);
         $values = $form->getPhpValues();
-        $values['media'][$field] = $field === 'user' ? $otherGuest->getId() : $album->getId();
+        $values['media'][$field] = 'user' === $field ? $otherGuest->getId() : $album->getId();
 
         $this->client->request($form->getMethod(), $form->getUri(), $values, [
             'media' => ['file' => $this->uploadedImage()],
@@ -335,7 +334,7 @@ class GuestMediaTest extends WebTestCase
     {
         $hasher = self::getContainer()->get(UserPasswordHasherInterface::class);
         $this->guest->setPassword($hasher->hashPassword($this->guest, 'test-password'));
-        $this->guest->setDisabledAt(new DateTimeImmutable());
+        $this->guest->setDisabledAt(new \DateTimeImmutable());
         self::getContainer()->get(EntityManagerInterface::class)->flush();
 
         $this->client->request('GET', '/login');

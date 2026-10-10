@@ -2,7 +2,6 @@
 
 namespace App\Controller\Admin;
 
-use App\Entity\Media;
 use App\Entity\User;
 use App\Exception\MediaDeletedFileNotRemovedException;
 use App\Form\GuestType;
@@ -40,9 +39,10 @@ class GuestController extends AbstractController
     #[IsGranted('ROLE_ADMIN')]
     #[Route('/admin/guest/disable/{toDisable}', name: 'admin_guest_disable', methods: ['POST'])]
     #[IsCsrfTokenValid('disable_guest', '_token')]
-    public function disableUser(User $toDisable): Response {
+    public function disableUser(User $toDisable): Response
+    {
         if ($toDisable->isAdmin()) {
-            throw $this->createAccessDeniedException("Seuls les invités peuvent être désactivés.");
+            throw $this->createAccessDeniedException('Seuls les invités peuvent être désactivés.');
         }
         $result = $this->userService->disableUser($toDisable);
         if ($result) {
@@ -57,9 +57,10 @@ class GuestController extends AbstractController
     #[IsGranted('ROLE_ADMIN')]
     #[Route('/admin/guest/enable/{toEnable}', name: 'admin_guest_enable', methods: ['POST'])]
     #[IsCsrfTokenValid('enable_guest', '_token')]
-    public function enableUser(User $toEnable): Response {
+    public function enableUser(User $toEnable): Response
+    {
         if ($toEnable->isAdmin()) {
-            throw $this->createAccessDeniedException("Seuls les invités peuvent être activés.");
+            throw $this->createAccessDeniedException('Seuls les invités peuvent être activés.');
         }
         $result = $this->userService->enableUser($toEnable);
         if ($result) {
@@ -73,14 +74,17 @@ class GuestController extends AbstractController
 
     #[IsGranted('ROLE_ADMIN')]
     #[Route('/admin/guest/add', name: 'admin_guest_add', methods: ['GET', 'POST'])]
-    public function createGuest(Request $request): Response {
+    public function createGuest(Request $request): Response
+    {
         $form = $this->createForm(GuestType::class);
         $form->handleRequest($request);
         if ($form->isSubmitted() && $form->isValid()) {
             $this->userService->createGuestUser($form->getData());
             $this->addFlash('success', 'Invité créé avec succès.');
+
             return $this->redirectToRoute('admin_guest');
         }
+
         return $this->render('admin/guest/add.html.twig', [
             'form' => $form,
         ]);
@@ -89,9 +93,10 @@ class GuestController extends AbstractController
     #[IsGranted('ROLE_ADMIN')]
     #[Route('/admin/guest/delete/{guest}', name: 'admin_guest_delete', methods: ['POST'])]
     #[IsCsrfTokenValid('delete_guest', '_token')]
-    public function deleteGuest(User $guest): Response {
+    public function deleteGuest(User $guest): Response
+    {
         if ($guest->isAdmin()) {
-            throw $this->createAccessDeniedException("Seuls les invités peuvent être supprimés.");
+            throw $this->createAccessDeniedException('Seuls les invités peuvent être supprimés.');
         }
         try {
             $this->userService->deleteUser($guest);

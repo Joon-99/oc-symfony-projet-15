@@ -23,7 +23,7 @@ class HomeController extends AbstractController
         UserRepository $userRepository,
         AlbumRepository $albumRepository,
         MediaRepository $mediaRepository,
-        UserService $userService
+        UserService $userService,
     ) {
         $this->userRepository = $userRepository;
         $this->albumRepository = $albumRepository;
@@ -56,6 +56,7 @@ class HomeController extends AbstractController
         if (!$guest->isActive() && !$this->isGranted('ROLE_ADMIN')) {
             throw $this->createNotFoundException('Cet utilisateur est inactif.');
         }
+
         return $this->render('front/guest.html.twig', [
             'guest' => $guest,
         ]);

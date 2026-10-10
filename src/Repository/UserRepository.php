@@ -5,7 +5,6 @@ namespace App\Repository;
 use App\Entity\User;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
-use SortDirection;
 use Symfony\Component\Security\Core\Exception\UnsupportedUserException;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\PasswordUpgraderInterface;
@@ -34,24 +33,23 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
         $this->getEntityManager()->flush();
     }
 
-       /**
-        * @return list<array{user: User, mediaCount: int}>
-        */
-       public function findByEnabledGuestWithMediaCount(): array
-       {
-           return $this->createQueryBuilder('u')
-               ->select('u AS user, COUNT(m) AS mediaCount')
-               ->leftJoin('u.medias', 'm')
-               ->andWhere('u.admin = :admin')
-               ->andWhere('u.disabledAt IS NULL')
-               ->setParameter('admin', false)
-               ->groupBy('u')
-               ->orderBy('u.name', SortDirection::Ascending)
-               ->getQuery()
-               ->getResult()
-           ;
-       }
-
+    /**
+     * @return list<array{user: User, mediaCount: int}>
+     */
+    public function findByEnabledGuestWithMediaCount(): array
+    {
+        return $this->createQueryBuilder('u')
+            ->select('u AS user, COUNT(m) AS mediaCount')
+            ->leftJoin('u.medias', 'm')
+            ->andWhere('u.admin = :admin')
+            ->andWhere('u.disabledAt IS NULL')
+            ->setParameter('admin', false)
+            ->groupBy('u')
+            ->orderBy('u.name', \SortDirection::Ascending)
+            ->getQuery()
+            ->getResult()
+        ;
+    }
 
     /**
      * @return array<User>
@@ -61,7 +59,7 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
         return $this->createQueryBuilder('u')
             ->andWhere('u.admin = :val')
             ->setParameter('val', $isAdmin)
-            ->orderBy('u.name', SortDirection::Ascending)
+            ->orderBy('u.name', \SortDirection::Ascending)
             ->getQuery()
             ->getResult()
         ;

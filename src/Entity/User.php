@@ -5,8 +5,6 @@ namespace App\Entity;
 use App\Entity\Trait\IdTrait;
 use App\Repository\UserRepository;
 use App\Validator\Constraints as AppAssert;
-use Symfony\Component\Validator\Constraints as Assert;
-use DateTimeImmutable;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
@@ -14,6 +12,7 @@ use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\EquatableInterface;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\Table(name: '`user`')]
@@ -47,7 +46,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Equatab
     private Collection $medias;
 
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
-    private ?DateTimeImmutable $disabledAt = null;
+    private ?\DateTimeImmutable $disabledAt = null;
 
     public function getPlainPassword(): ?string
     {
@@ -63,15 +62,15 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Equatab
 
     public function isActive(): bool
     {
-        return $this->disabledAt === null;
+        return null === $this->disabledAt;
     }
 
-    public function getDisabledAt(): ?DateTimeImmutable
+    public function getDisabledAt(): ?\DateTimeImmutable
     {
         return $this->disabledAt;
     }
 
-    public function setDisabledAt(?DateTimeImmutable $disabledAt): static
+    public function setDisabledAt(?\DateTimeImmutable $disabledAt): static
     {
         $this->disabledAt = $disabledAt;
 
