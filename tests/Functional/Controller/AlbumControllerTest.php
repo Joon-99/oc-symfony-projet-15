@@ -5,6 +5,7 @@ namespace App\Tests\Functional\Controller;
 use App\Entity\Album;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
@@ -83,10 +84,44 @@ class AlbumControllerTest extends WebTestCase
         $manager->flush();
         $albumId = $album->getId();
 
-        $this->client->request('GET', '/admin/album/delete/'.$albumId);
+        $crawler = $this->client->request('GET', '/admin/album');
+        self::assertResponseIsSuccessful();
+        $this->client->submit($crawler->filter('form[action="/admin/album/delete/'.$albumId.'"]')->form());
 
         self::assertResponseRedirects('/admin/album');
         $manager->clear();
         self::assertNull($manager->find(Album::class, $albumId));
+    }
+
+    /** @param array<string, string> $parameters */
+    #[DataProvider('rejectedDeleteRequests')]
+    public function testRejectedDeleteRequestKeepsAlbum(string $method, array $parameters, int $status): void
+    {
+        $manager = self::getContainer()->get(EntityManagerInterface::class);
+        $album = (new Album())->setName('Album kept after rejected deletion');
+        $manager->persist($album);
+        $manager->flush();
+        $albumId = $album->getId();
+
+        $this->client->request('GET', '/admin/album');
+        self::assertResponseIsSuccessful();
+        $this->client->request($method, '/admin/album/delete/'.$albumId, $parameters);
+
+        self::assertResponseStatusCodeSame($status);
+        if ('POST' === $method) {
+            self::assertResponseRedirects('http://localhost/login');
+        }
+        $manager->clear();
+        self::assertNotNull($manager->find(Album::class, $albumId));
+    }
+
+    /**
+     * @return iterable<string, array{string, array<string, string>, int}>
+     */
+    public static function rejectedDeleteRequests(): iterable
+    {
+        yield 'GET' => ['GET', [], 405];
+        yield 'missing token' => ['POST', [], 302];
+        yield 'invalid token' => ['POST', ['_token' => 'invalid'], 302];
     }
 }
