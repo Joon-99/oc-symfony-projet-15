@@ -7,6 +7,8 @@ use App\Entity\Media;
 use App\Entity\User;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
+use Liip\ImagineBundle\Imagine\Cache\CacheManager;
+use Liip\ImagineBundle\Model\Binary;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
@@ -18,6 +20,9 @@ class GuestControllerTest extends WebTestCase
 
     /** @var list<string> */
     private array $filePaths = [];
+
+    /** @var list<string> */
+    private array $cachePaths = [];
 
     protected function setUp(): void
     {
@@ -159,6 +164,10 @@ class GuestControllerTest extends WebTestCase
                 ->setTitle('Deletion test '.$index)
                 ->setPath('uploads/'.basename($path));
             $manager->persist($media);
+            $cache = self::getContainer()->get(CacheManager::class);
+            $this->cachePaths[] = $media->getPath();
+            $cache->store(new Binary('cached image', 'image/webp', 'webp'), $media->getPath(), 'compressed');
+            self::assertTrue($cache->isStored($media->getPath(), 'compressed'));
         }
         $manager->flush();
         $guestId = $guest->getId();
@@ -178,6 +187,9 @@ class GuestControllerTest extends WebTestCase
         self::assertNotNull($manager->find(Album::class, $albumId));
         foreach ($this->filePaths as $path) {
             self::assertFileDoesNotExist($path);
+        }
+        foreach ($this->cachePaths as $path) {
+            self::assertFalse(self::getContainer()->get(CacheManager::class)->isStored($path, 'compressed'));
         }
     }
 
@@ -239,6 +251,9 @@ class GuestControllerTest extends WebTestCase
 
     protected function tearDown(): void
     {
+        if ($this->cachePaths) {
+            self::getContainer()->get(CacheManager::class)->remove($this->cachePaths);
+        }
         parent::tearDown();
         foreach ($this->filePaths as $path) {
             if (file_exists($path)) {

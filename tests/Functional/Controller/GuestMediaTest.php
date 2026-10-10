@@ -6,6 +6,8 @@ use App\Entity\Album;
 use App\Entity\Media;
 use App\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
+use Liip\ImagineBundle\Imagine\Cache\CacheManager;
+use Liip\ImagineBundle\Model\Binary;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
@@ -19,6 +21,9 @@ class GuestMediaTest extends WebTestCase
 
     /** @var list<string> */
     private array $filePaths = [];
+
+    /** @var list<string> */
+    private array $cachePaths = [];
 
     protected function setUp(): void
     {
@@ -204,6 +209,11 @@ class GuestMediaTest extends WebTestCase
         $media = $this->createMedia($this->guest, 'My image');
         $mediaId = $media->getId();
         $path = self::getContainer()->getParameter('media_upload_dir').'/'.basename($media->getPath());
+        $cache = self::getContainer()->get(CacheManager::class);
+        $cachePath = $media->getPath();
+        $this->cachePaths[] = $cachePath;
+        $cache->store(new Binary('cached image', 'image/webp', 'webp'), $cachePath, 'compressed');
+        self::assertTrue($cache->isStored($cachePath, 'compressed'));
         $this->client->loginUser($this->guest);
         $crawler = $this->client->request('GET', '/admin/media');
         self::assertResponseIsSuccessful();
@@ -214,6 +224,7 @@ class GuestMediaTest extends WebTestCase
         $manager = self::getContainer()->get(EntityManagerInterface::class);
         self::assertNull($manager->find(Media::class, $mediaId));
         self::assertFileDoesNotExist($path);
+        self::assertFalse(self::getContainer()->get(CacheManager::class)->isStored($cachePath, 'compressed'));
     }
 
     /** Protects other guests' and unowned media records and files from guest deletion. */
@@ -394,6 +405,9 @@ class GuestMediaTest extends WebTestCase
 
     protected function tearDown(): void
     {
+        if ($this->cachePaths) {
+            self::getContainer()->get(CacheManager::class)->remove($this->cachePaths);
+        }
         parent::tearDown();
         foreach ($this->filePaths as $path) {
             if (is_file($path)) {

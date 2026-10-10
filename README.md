@@ -60,7 +60,7 @@ symfony server:start
 - `src/Service/` centralise les opérations métier, notamment la désactivation des invités et la suppression de leurs médias et fichiers.
 - Les formulaires limitent les images envoyées à 2 Mo et aux formats JPEG, PNG, GIF et WebP.
 - Les invités désactivés ne sont pas affichés au public et ne peuvent pas se connecter. 
-- Les images sont stockées sous `public/uploads`. LiipImagineBundle génère des versions WebP compressées en cache.
+- Les images sont stockées sous `public/uploads`. LiipImagineBundle génère des versions WebP compressées en cache. La suppression d'un média ou d'un invité supprime également les images associées en cache.
 
 ## Tests et qualité
 

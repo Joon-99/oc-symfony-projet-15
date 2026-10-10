@@ -6,6 +6,7 @@ use App\Entity\User;
 use App\Exception\MediaDeletedFileNotRemovedException;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
+use Liip\ImagineBundle\Imagine\Cache\CacheManager;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Filesystem\Exception\IOException;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
@@ -18,6 +19,7 @@ class UserService
     private MediaService $mediaService;
     private FileService $fileService;
     private LoggerInterface $logger;
+    private CacheManager $cacheManager;
 
     public function __construct(
         EntityManagerInterface $entityManager,
@@ -26,6 +28,7 @@ class UserService
         MediaService $mediaService,
         FileService $fileService,
         LoggerInterface $logger,
+        CacheManager $cacheManager,
     ) {
         $this->entityManager = $entityManager;
         $this->passwordHasher = $passwordHasher;
@@ -33,6 +36,7 @@ class UserService
         $this->mediaService = $mediaService;
         $this->fileService = $fileService;
         $this->logger = $logger;
+        $this->cacheManager = $cacheManager;
     }
 
     public function disableUser(User $user): bool
@@ -85,13 +89,18 @@ class UserService
     public function deleteUser(User $user): void
     {
         $filePaths = [];
+        $cachePaths = [];
         foreach ($user->getMedias() as $media) {
             $filePaths[] = $this->mediaService->getMediaFullPath($media);
+            $cachePaths[] = $media->getPath();
             $this->entityManager->remove($media);
         }
         $this->entityManager->remove($user);
         $this->entityManager->flush();
         try {
+            if ($cachePaths) {
+                $this->cacheManager->remove($cachePaths);
+            }
             $this->fileService->deleteFiles($filePaths);
         } catch (IOException $e) {
             $this->logger->error('Failed to delete user media files: '.$e->getMessage());
