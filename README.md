@@ -69,6 +69,7 @@ Préparez aussi la base de test (Doctrine ajoute le suffixe `_test`) :
 ```bash
 php bin/console doctrine:database:create --env=test --if-not-exists
 php bin/console doctrine:migrations:migrate --env=test --no-interaction
+php bin/console doctrine:fixtures:load --env=test --no-interaction
 composer test
 ```
 
