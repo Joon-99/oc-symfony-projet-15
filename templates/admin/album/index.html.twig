@@ -17,10 +17,11 @@
             <tr>
                 <td>{{ album.name }}</td>
                 <td>
-                    <a href="{{ path('admin_album_update', {id: album.id}) }}" class="btn btn-warning">Modifier</a>
-                    <form action="{{ path('admin_album_delete', {id: album.id}) }}" method="post" class="d-inline">
+                    <a href="{{ path('admin_album_update', {album: album.id}) }}" class="btn btn-warning">Modifier</a>
+                    <form action="{{ path('admin_album_delete', {album: album.id}) }}" method="post" class="d-inline"
+                          onsubmit="return confirm('Supprimer cet album et tous ses médias ? Cette action est irréversible.');">
                         <input type="hidden" name="_token" value="{{ csrf_token('delete_album') }}">
-                        <button type="submit" class="btn btn-danger">Supprimer</button>
+                        <button type="submit" class="btn btn-danger">Supprimer l'album et ses médias</button>
                     </form>
                 </td>
             </tr>

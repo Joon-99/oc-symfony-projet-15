@@ -3,7 +3,9 @@
 namespace App\Controller\Admin;
 
 use App\Entity\Album;
+use App\Exception\MediaDeletedFileNotRemovedException;
 use App\Form\AlbumType;
+use App\Service\AlbumService;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -45,10 +47,9 @@ class AlbumController extends AbstractController
         return $this->render('admin/album/add.html.twig', ['form' => $form->createView()]);
     }
 
-    #[Route('/admin/album/update/{id}', name: 'admin_album_update', requirements: ['id' => '\d+'])]
-    public function update(Request $request, int $id): Response
+    #[Route('/admin/album/update/{album}', name: 'admin_album_update', requirements: ['album' => '\d+'])]
+    public function update(Request $request, Album $album): Response
     {
-        $album = $this->doctrine->getRepository(Album::class)->find($id);
         $form = $this->createForm(AlbumType::class, $album);
         $form->handleRequest($request);
 
@@ -61,13 +62,15 @@ class AlbumController extends AbstractController
         return $this->render('admin/album/update.html.twig', ['form' => $form->createView()]);
     }
 
-    #[Route('/admin/album/delete/{id}', name: 'admin_album_delete', requirements: ['id' => '\d+'], methods: ['POST'])]
+    #[Route('/admin/album/delete/{album}', name: 'admin_album_delete', requirements: ['album' => '\d+'], methods: ['POST'])]
     #[IsCsrfTokenValid('delete_album', '_token')]
-    public function delete(int $id): Response
+    public function delete(Album $album, AlbumService $albumService): Response
     {
-        $album = $this->doctrine->getRepository(Album::class)->find($id);
-        $this->doctrine->getManager()->remove($album);
-        $this->doctrine->getManager()->flush();
+        try {
+            $albumService->deleteAlbum($album);
+        } catch (MediaDeletedFileNotRemovedException $e) {
+            $this->addFlash('warning', "L'album et ses médias ont été supprimés, mais certains fichiers n'ont pas pu être supprimés.");
+        }
 
         return $this->redirectToRoute('admin_album_index');
     }
