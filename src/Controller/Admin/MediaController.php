@@ -4,6 +4,7 @@ namespace App\Controller\Admin;
 
 use App\Entity\Media;
 use App\Entity\User;
+use App\Exception\MediaDeletedFileNotRemovedException;
 use App\Form\MediaType;
 use App\Service\MediaService;
 use Doctrine\Persistence\ManagerRegistry;
@@ -15,13 +16,11 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\CurrentUser;
 use Symfony\Component\Security\Http\Attribute\IsCsrfTokenValid;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
-use App\Exception\MediaDeletedFileNotRemovedException;
 
 class MediaController extends AbstractController
 {
     private ManagerRegistry $doctrine;
     private MediaService $mediaService;
-
 
     public function __construct(ManagerRegistry $doctrine, MediaService $mediaService)
     {
@@ -91,8 +90,9 @@ class MediaController extends AbstractController
         try {
             $this->mediaService->deleteMedia($media);
         } catch (MediaDeletedFileNotRemovedException $e) {
-            $this->addFlash('warning',  $e->getMessage());
+            $this->addFlash('warning', $e->getMessage());
         }
+
         return $this->redirectToRoute('media_index');
     }
 }

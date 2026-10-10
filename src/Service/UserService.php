@@ -1,13 +1,14 @@
 <?php
 
 namespace App\Service;
-use App\Exception\MediaDeletedFileNotRemovedException;
+
 use App\Entity\User;
+use App\Exception\MediaDeletedFileNotRemovedException;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\Filesystem\Exception\IOException;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
-use Psr\Log\LoggerInterface;
 
 class UserService
 {
@@ -24,9 +25,8 @@ class UserService
         UserRepository $userRepository,
         MediaService $mediaService,
         FileService $fileService,
-        LoggerInterface $logger
-    )
-    {
+        LoggerInterface $logger,
+    ) {
         $this->entityManager = $entityManager;
         $this->passwordHasher = $passwordHasher;
         $this->userRepository = $userRepository;
@@ -41,8 +41,10 @@ class UserService
             $user->setDisabledAt(new \DateTimeImmutable());
             $this->entityManager->persist($user);
             $this->entityManager->flush();
+
             return true;
         }
+
         return false;
     }
 
@@ -52,8 +54,10 @@ class UserService
             $user->setDisabledAt(null);
             $this->entityManager->persist($user);
             $this->entityManager->flush();
+
             return true;
         }
+
         return false;
     }
 
@@ -90,7 +94,7 @@ class UserService
         try {
             $this->fileService->deleteFiles($filePaths);
         } catch (IOException $e) {
-            $this->logger->error('Failed to delete user media files: ' . $e->getMessage());
+            $this->logger->error('Failed to delete user media files: '.$e->getMessage());
             throw new MediaDeletedFileNotRemovedException($e->getMessage(), previous: $e);
         }
     }

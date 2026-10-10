@@ -17,14 +17,12 @@ class MediaService
     private string $mediaUploadsDir;
     private LoggerInterface $logger;
 
-
     public function __construct(
         EntityManagerInterface $entityManager,
         FileService $fileService,
         #[Autowire('%media_upload_dir%')] string $mediaUploadsDir,
-        LoggerInterface $logger
-    )
-    {
+        LoggerInterface $logger,
+    ) {
         $this->entityManager = $entityManager;
         $this->fileService = $fileService;
         $this->mediaUploadsDir = $mediaUploadsDir;
@@ -37,7 +35,7 @@ class MediaService
     }
 
     /**
-     * @throws MediaDeletedFileNotRemovedException 
+     * @throws MediaDeletedFileNotRemovedException
      */
     public function deleteMedia(Media $media): void
     {
@@ -46,9 +44,8 @@ class MediaService
         try {
             $this->fileService->deleteFile($this->getMediaFullPath($media));
         } catch (IOException $e) {
-            $this->logger->error(MediaDeletedFileNotRemovedException::DEFAULT_MESSAGE . $e->getMessage());
+            $this->logger->error(MediaDeletedFileNotRemovedException::DEFAULT_MESSAGE.$e->getMessage());
             throw new MediaDeletedFileNotRemovedException($e->getMessage(), previous: $e);
         }
     }
-
 }

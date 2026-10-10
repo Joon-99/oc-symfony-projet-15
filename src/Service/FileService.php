@@ -20,8 +20,9 @@ class FileService
     }
 
     /**
-     * @param list<string> $filePaths 
-     * @throws IOException 
+     * @param list<string> $filePaths
+     *
+     * @throws IOException
      */
     public function deleteFiles(array $filePaths): void
     {
@@ -34,7 +35,7 @@ class FileService
             }
         }
         if (!empty($errors)) {
-            throw new IOException('Failed to delete some files: ' . json_encode($errors));
+            throw new IOException('Failed to delete some files: '.json_encode($errors));
         }
     }
 }

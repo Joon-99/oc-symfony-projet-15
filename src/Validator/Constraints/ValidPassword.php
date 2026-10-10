@@ -14,7 +14,7 @@ class ValidPassword extends Compound
         return [
             new Assert\Sequentially([
                 new Assert\NotBlank(),
-                new Assert\PasswordStrength(minScore: PasswordStrength::STRENGTH_STRONG),
+                new PasswordStrength(minScore: PasswordStrength::STRENGTH_STRONG),
             ]),
         ];
     }

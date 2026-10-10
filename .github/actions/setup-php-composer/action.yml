@@ -1,0 +1,22 @@
+name: Setup PHP and install composer dependencies
+description: Sets up PHP 8.4 with the project's required extensions, caches the composer cache directory, and runs composer install.
+
+inputs:
+  coverage:
+    description: Coverage driver to set up (xdebug, pcov or none)
+    required: false
+    default: none
+
+runs:
+  using: composite
+  steps:
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.4'
+        extensions: ctype, iconv, pdo_pgsql, intl, mbstring, gd
+        coverage: ${{ inputs.coverage }}
+        tools: composer:v2
+
+    - name: Install composer dependencies
+      uses: ramsey/composer-install@4.0.0
