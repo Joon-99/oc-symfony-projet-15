@@ -25,6 +25,11 @@
                             </li>
                         {% endif %}
                         <li class="nav-item">
+                            <a class="nav-link" href="{{ path('home') }}">
+                                Accueil
+                            </a>
+                        </li>
+                        <li class="nav-item">
                             <form action="{{ path('logout') }}" method="post">
                                 <input type="hidden" name="_csrf_token" value="{{ csrf_token('logout') }}">
                                 <button class="nav-link" type="submit">Déconnexion</button>
