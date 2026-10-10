@@ -17,9 +17,10 @@
                         <img src="{{ 'images/logo.png' | imagine_filter('compressed') }}" alt="Ina Zaoui">
                     </a>
                     <ul class="nav">
-                        {% if is_granted('ROLE_ADMIN') %}
+                        {% if is_granted('ROLE_USER') %}
+                            {% set mediaLinkTxt = is_granted('ROLE_ADMIN') ? 'Admin' : 'Mes médias' %}
                             <li class="nav-item">
-                                <a class="nav-link" href="{{ path('admin_media_index') }}">Admin</a>
+                                <a class="nav-link" href="{{ path('media_index') }}">{{ mediaLinkTxt }}</a>
                             </li>
                         {% endif %}
                         <li class="nav-item">

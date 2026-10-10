@@ -29,11 +29,11 @@ class MediaController extends AbstractController
         $this->mediaService = $mediaService;
     }
 
-    #[IsGranted('ROLE_ADMIN')]
-    #[Route('/admin/media', name: 'admin_media_index')]
+    #[IsGranted('ROLE_USER')]
+    #[Route('/admin/media', name: 'media_index')]
     public function index(Request $request, #[CurrentUser] ?User $user): Response
     {
-        $page = $request->query->getInt('page', 1);
+        $page = max(1, $request->query->getInt('page', 1));
 
         $criteria = [];
 
@@ -47,7 +47,7 @@ class MediaController extends AbstractController
             25,
             25 * ($page - 1)
         );
-        $total = $this->doctrine->getRepository(Media::class)->count([]);
+        $total = $this->doctrine->getRepository(Media::class)->count($criteria);
 
         return $this->render('admin/media/index.html.twig', [
             'medias' => $medias,
@@ -56,8 +56,8 @@ class MediaController extends AbstractController
         ]);
     }
 
-    #[IsGranted('ROLE_ADMIN')]
-    #[Route('/admin/media/add', name: 'admin_media_add')]
+    #[IsGranted('ROLE_USER')]
+    #[Route('/admin/media/add', name: 'media_add')]
     public function add(Request $request, #[CurrentUser] ?User $user, #[Autowire('%media_upload_dir%')] string $mediaUploadsDir): Response
     {
         $media = new Media();
@@ -74,22 +74,25 @@ class MediaController extends AbstractController
             $this->doctrine->getManager()->persist($media);
             $this->doctrine->getManager()->flush();
 
-            return $this->redirectToRoute('admin_media_index');
+            return $this->redirectToRoute('media_index');
         }
 
         return $this->render('admin/media/add.html.twig', ['form' => $form->createView()]);
     }
 
-    #[IsGranted('ROLE_ADMIN')]
-    #[Route('/admin/media/delete/{media}', name: 'admin_media_delete', methods: ['POST'])]
+    #[IsGranted('ROLE_USER')]
+    #[Route('/admin/media/delete/{media}', name: 'media_delete', methods: ['POST'])]
     #[IsCsrfTokenValid('delete_media', '_token')]
-    public function delete(Media $media): Response
+    public function delete(Media $media, #[CurrentUser] User $currentUser): Response
     {
+        if (!$currentUser->isAdmin() && $media->getUser() !== $currentUser) {
+            throw $this->createAccessDeniedException("Vous n'avez pas la permission de supprimer ce média.");
+        }
         try {
             $this->mediaService->deleteMedia($media);
         } catch (MediaDeletedFileNotRemovedException $e) {
             $this->addFlash('warning',  $e->getMessage());
         }
-        return $this->redirectToRoute('admin_media_index');
+        return $this->redirectToRoute('media_index');
     }
 }

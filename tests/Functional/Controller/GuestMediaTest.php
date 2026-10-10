@@ -1,0 +1,393 @@
+<?php
+
+namespace App\Tests\Functional\Controller;
+
+use App\Entity\Album;
+use App\Entity\Media;
+use App\Entity\User;
+use DateTimeImmutable;
+use Doctrine\ORM\EntityManagerInterface;
+use PHPUnit\Framework\Attributes\DataProvider;
+use Symfony\Bundle\FrameworkBundle\KernelBrowser;
+use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+
+class GuestMediaTest extends WebTestCase
+{
+    private KernelBrowser $client;
+    private User $guest;
+
+    /** @var list<string> */
+    private array $filePaths = [];
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->client = static::createClient();
+        $this->guest = $this->createUser('Media test guest');
+    }
+
+    #[DataProvider('anonymousRequests')]
+    public function testAnonymousVisitorCannotAccessMediaManagement(string $method, string $url): void
+    {
+        $manager = self::getContainer()->get(EntityManagerInterface::class);
+        $mediaCount = $manager->getRepository(Media::class)->count([]);
+
+        $this->client->request($method, $url, [
+            'media' => ['title' => 'Anonymous upload'],
+        ], [
+            'media' => ['file' => $this->uploadedImage()],
+        ]);
+
+        self::assertResponseRedirects('http://localhost/login');
+        $manager = self::getContainer()->get(EntityManagerInterface::class);
+        self::assertSame($mediaCount, $manager->getRepository(Media::class)->count([]));
+    }
+
+    /** @return iterable<string, array{string, string}> */
+    public static function anonymousRequests(): iterable
+    {
+        yield 'list media' => ['GET', '/admin/media'];
+        yield 'open upload form' => ['GET', '/admin/media/add'];
+        yield 'submit upload' => ['POST', '/admin/media/add'];
+    }
+
+    public function testGuestCanUploadAnImageOnlyForThemselves(): void
+    {
+        $this->client->loginUser($this->guest);
+        $this->client->request('GET', '/admin/media/add');
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorExists('#media_title');
+        self::assertSelectorExists('#media_file');
+        self::assertSelectorNotExists('#media_user');
+        self::assertSelectorNotExists('#media_album');
+
+        $this->client->submitForm('Ajouter', [
+            'media[title]' => 'Guest uploaded image',
+            'media[file]' => self::$kernel->getProjectDir().'/tests/Resources/test-upload-media.jpg',
+        ]);
+
+        $manager = self::getContainer()->get(EntityManagerInterface::class);
+        $media = $manager->getRepository(Media::class)->findOneBy(['title' => 'Guest uploaded image']);
+        self::assertNotNull($media);
+        $path = self::getContainer()->getParameter('media_upload_dir').'/'.basename($media->getPath());
+        $this->filePaths[] = $path;
+
+        self::assertResponseRedirects('/admin/media');
+        self::assertSame($this->guest->getId(), $media->getUser()?->getId());
+        self::assertNull($media->getAlbum());
+        self::assertFileExists($path);
+        self::assertSame(
+            hash_file('sha256', self::$kernel->getProjectDir().'/tests/Resources/test-upload-media.jpg'),
+            hash_file('sha256', $path)
+        );
+    }
+
+    #[DataProvider('forgedFields')]
+    public function testGuestCannotChooseAnOwnerOrAlbum(string $field): void
+    {
+        $otherGuest = $this->createUser('Other guest');
+        $album = (new Album())->setName('Protected album');
+        $manager = self::getContainer()->get(EntityManagerInterface::class);
+        $manager->persist($album);
+        $manager->flush();
+        $mediaCount = $manager->getRepository(Media::class)->count([]);
+
+        $this->client->loginUser($this->guest);
+        $crawler = $this->client->request('GET', '/admin/media/add');
+        self::assertResponseIsSuccessful();
+        $form = $crawler->filter('form[name=media]')->form(['media[title]' => 'Forged upload']);
+        $values = $form->getPhpValues();
+        $values['media'][$field] = $field === 'user' ? $otherGuest->getId() : $album->getId();
+
+        $this->client->request($form->getMethod(), $form->getUri(), $values, [
+            'media' => ['file' => $this->uploadedImage()],
+        ]);
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorTextContains('form[name=media]', 'This form should not contain extra fields.');
+        $manager = self::getContainer()->get(EntityManagerInterface::class);
+        self::assertSame($mediaCount, $manager->getRepository(Media::class)->count([]));
+    }
+
+    /** @return iterable<string, array{string}> */
+    public static function forgedFields(): iterable
+    {
+        yield 'another owner' => ['user'];
+        yield 'an album' => ['album'];
+    }
+
+    public function testGuestListAndPaginationContainOnlyTheirOwnMedia(): void
+    {
+        $otherGuest = $this->createUser('Other guest');
+        for ($number = 1; $number <= 26; ++$number) {
+            $this->createMedia($this->guest, 'My image '.$number);
+            $this->createMedia($otherGuest, 'Someone else image '.$number);
+        }
+        $this->createMedia(null, 'Unowned portfolio image');
+        $this->client->loginUser($this->guest);
+
+        $this->client->request('GET', '/admin/media');
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorCount(25, 'tbody tr');
+        self::assertSelectorTextContains('tbody', 'My image 1');
+        self::assertSelectorTextContains('tbody', 'My image 25');
+        self::assertSelectorTextNotContains('tbody', 'Someone else image');
+        self::assertSelectorTextNotContains('tbody', 'Unowned portfolio image');
+        self::assertSelectorExists('a[href="/admin/media?page=2"]');
+        self::assertSelectorNotExists('a[href="/admin/media?page=3"]');
+        self::assertSelectorNotExists('a[href="/admin/album"]');
+        self::assertSelectorNotExists('a[href="/admin/guest"]');
+
+        $this->client->request('GET', '/admin/media?page=2');
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorCount(1, 'tbody tr');
+        self::assertSelectorTextContains('tbody', 'My image 26');
+        self::assertSelectorNotExists('a[href="/admin/media?page=3"]');
+    }
+
+    #[DataProvider('singlePageMediaCounts')]
+    public function testGuestGalleryHidesPaginationForAtMostOnePage(int $mediaCount): void
+    {
+        for ($number = 1; $number <= $mediaCount; ++$number) {
+            $this->createMedia($this->guest, 'My image '.$number);
+        }
+        $this->client->loginUser($this->guest);
+
+        $this->client->request('GET', '/admin/media');
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorCount($mediaCount, 'tbody tr');
+        self::assertSelectorNotExists('.pagination');
+    }
+
+    /** @return iterable<string, array{int}> */
+    public static function singlePageMediaCounts(): iterable
+    {
+        yield 'empty gallery' => [0];
+        yield 'one image' => [1];
+        yield 'full first page' => [25];
+    }
+
+    #[DataProvider('nonpositivePages')]
+    public function testGuestNonpositivePageShowsFirstPage(int $page): void
+    {
+        $this->createMedia($this->guest, 'My image');
+        $this->client->loginUser($this->guest);
+
+        $this->client->request('GET', '/admin/media?page='.$page);
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorCount(1, 'tbody tr');
+        self::assertSelectorTextContains('tbody', 'My image');
+    }
+
+    /** @return iterable<string, array{int}> */
+    public static function nonpositivePages(): iterable
+    {
+        yield 'zero' => [0];
+        yield 'negative' => [-1];
+    }
+
+    public function testGuestCanDeleteTheirOwnMediaAndFile(): void
+    {
+        $media = $this->createMedia($this->guest, 'My image');
+        $mediaId = $media->getId();
+        $path = self::getContainer()->getParameter('media_upload_dir').'/'.basename($media->getPath());
+        $this->client->loginUser($this->guest);
+        $crawler = $this->client->request('GET', '/admin/media');
+        self::assertResponseIsSuccessful();
+
+        $this->client->submit($crawler->filter('form[action="/admin/media/delete/'.$mediaId.'"]')->form());
+
+        self::assertResponseRedirects('/admin/media');
+        $manager = self::getContainer()->get(EntityManagerInterface::class);
+        self::assertNull($manager->find(Media::class, $mediaId));
+        self::assertFileDoesNotExist($path);
+    }
+
+    #[DataProvider('protectedOwners')]
+    public function testGuestCannotDeleteMediaTheyDoNotOwn(bool $hasOwner): void
+    {
+        $owner = $hasOwner ? $this->createUser('Other guest') : null;
+        $protectedMedia = $this->createMedia($owner, 'Protected image');
+        $protectedId = $protectedMedia->getId();
+        $path = self::getContainer()->getParameter('media_upload_dir').'/'.basename($protectedMedia->getPath());
+        $fileHash = hash_file('sha256', $path);
+        $ownMedia = $this->createMedia($this->guest, 'My image');
+        $this->client->loginUser($this->guest);
+        $crawler = $this->client->request('GET', '/admin/media');
+        self::assertResponseIsSuccessful();
+        $form = $crawler->filter('form[action="/admin/media/delete/'.$ownMedia->getId().'"]')->form();
+
+        $this->client->request('POST', '/admin/media/delete/'.$protectedId, $form->getPhpValues());
+
+        self::assertResponseStatusCodeSame(403);
+        $manager = self::getContainer()->get(EntityManagerInterface::class);
+        $media = $manager->find(Media::class, $protectedId);
+        self::assertNotNull($media);
+        self::assertSame($owner?->getId(), $media->getUser()?->getId());
+        self::assertSame('Protected image', $media->getTitle());
+        self::assertFileExists($path);
+        self::assertSame($fileHash, hash_file('sha256', $path));
+    }
+
+    /** @return iterable<string, array{bool}> */
+    public static function protectedOwners(): iterable
+    {
+        yield 'another guest media' => [true];
+        yield 'unowned portfolio media' => [false];
+    }
+
+    public function testGuestCannotManageAlbums(): void
+    {
+        $album = (new Album())->setName('Protected album');
+        $manager = self::getContainer()->get(EntityManagerInterface::class);
+        $manager->persist($album);
+        $manager->flush();
+        $albumId = $album->getId();
+        $this->client->loginUser($this->guest);
+
+        $requests = [
+            ['GET', '/admin/album'],
+            ['GET', '/admin/album/add'],
+            ['POST', '/admin/album/add'],
+            ['GET', '/admin/album/update/'.$albumId],
+            ['POST', '/admin/album/update/'.$albumId],
+            ['GET', '/admin/album/delete/'.$albumId],
+            ['POST', '/admin/album/delete/'.$albumId],
+        ];
+        foreach ($requests as [$method, $url]) {
+            $this->client->request($method, $url);
+            self::assertResponseStatusCodeSame(403, $method.' '.$url);
+        }
+
+        $manager = self::getContainer()->get(EntityManagerInterface::class);
+        self::assertSame('Protected album', $manager->find(Album::class, $albumId)?->getName());
+    }
+
+    public function testAdminCanStillListAndDeleteGuestAndUnownedMedia(): void
+    {
+        $admin = $this->createUser('Media test admin', true);
+        $guestMedia = $this->createMedia($this->guest, 'Guest image for admin');
+        $unownedMedia = $this->createMedia(null, 'Portfolio image for admin');
+        $mediaCount = self::getContainer()->get(EntityManagerInterface::class)->getRepository(Media::class)->count([]);
+        $this->client->loginUser($admin);
+
+        foreach ([$guestMedia, $unownedMedia] as $media) {
+            $mediaId = $media->getId();
+            $path = self::getContainer()->getParameter('media_upload_dir').'/'.basename($media->getPath());
+            $crawler = $this->client->request('GET', '/admin/media');
+            self::assertResponseIsSuccessful();
+            self::assertSelectorCount(min(25, $mediaCount), 'tbody tr');
+            self::assertSelectorTextContains('thead', 'Artiste');
+            self::assertSelectorExists('a[href="/admin/album"]');
+            self::assertSelectorExists('a[href="/admin/guest"]');
+            $form = $crawler->filter('tbody form')->first()->form();
+
+            $this->client->request('POST', '/admin/media/delete/'.$mediaId, $form->getPhpValues());
+
+            self::assertResponseRedirects('/admin/media');
+            $manager = self::getContainer()->get(EntityManagerInterface::class);
+            self::assertNull($manager->find(Media::class, $mediaId));
+            self::assertFileDoesNotExist($path);
+            --$mediaCount;
+        }
+    }
+
+    public function testEnabledGuestCanLogInAndAccessTheirMedia(): void
+    {
+        $hasher = self::getContainer()->get(UserPasswordHasherInterface::class);
+        $this->guest->setPassword($hasher->hashPassword($this->guest, 'test-password'));
+        self::getContainer()->get(EntityManagerInterface::class)->flush();
+
+        $this->client->request('GET', '/login');
+        $this->client->submitForm('Connexion', [
+            '_username' => $this->guest->getEmail(),
+            '_password' => 'test-password',
+        ]);
+
+        self::assertResponseRedirects('/');
+        $this->client->followRedirect();
+        self::assertSelectorExists('button:contains("Déconnexion")');
+
+        $this->client->request('GET', '/admin/media/add');
+        self::assertResponseIsSuccessful();
+    }
+
+    public function testDisabledGuestCannotLogInOrUpload(): void
+    {
+        $hasher = self::getContainer()->get(UserPasswordHasherInterface::class);
+        $this->guest->setPassword($hasher->hashPassword($this->guest, 'test-password'));
+        $this->guest->setDisabledAt(new DateTimeImmutable());
+        self::getContainer()->get(EntityManagerInterface::class)->flush();
+
+        $this->client->request('GET', '/login');
+        $this->client->submitForm('Connexion', [
+            '_username' => $this->guest->getEmail(),
+            '_password' => 'test-password',
+        ]);
+
+        self::assertResponseRedirects('/login');
+        $this->client->followRedirect();
+        self::assertSelectorTextContains('.alert-danger', 'Votre compte est désactivé');
+
+        $this->client->request('GET', '/admin/media/add');
+        self::assertResponseRedirects('http://localhost/login');
+    }
+
+    private function createUser(string $name, bool $admin = false): User
+    {
+        $user = (new User())
+            ->setName($name)
+            ->setEmail('media-test-'.bin2hex(random_bytes(8)).'@example.com')
+            ->setPassword('unused-test-password')
+            ->setAdmin($admin);
+        $manager = self::getContainer()->get(EntityManagerInterface::class);
+        $manager->persist($user);
+        $manager->flush();
+
+        return $user;
+    }
+
+    private function createMedia(?User $owner, string $title): Media
+    {
+        $path = tempnam(self::getContainer()->getParameter('media_upload_dir'), 'guest-media-');
+        self::assertNotFalse($path);
+        $this->filePaths[] = $path;
+        $media = (new Media())
+            ->setUser($owner)
+            ->setTitle($title)
+            ->setPath('uploads/'.basename($path));
+        $manager = self::getContainer()->get(EntityManagerInterface::class);
+        $manager->persist($media);
+        $manager->flush();
+
+        return $media;
+    }
+
+    private function uploadedImage(): UploadedFile
+    {
+        return new UploadedFile(
+            self::$kernel->getProjectDir().'/tests/Resources/test-upload-media.jpg',
+            'photo.jpg',
+            'image/jpeg',
+            null,
+            true
+        );
+    }
+
+    protected function tearDown(): void
+    {
+        parent::tearDown();
+        foreach ($this->filePaths as $path) {
+            if (is_file($path)) {
+                unlink($path);
+            }
+        }
+    }
+}
