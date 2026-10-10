@@ -9,6 +9,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\IsCsrfTokenValid;
 
 class AlbumController extends AbstractController
 {
@@ -60,7 +61,8 @@ class AlbumController extends AbstractController
         return $this->render('admin/album/update.html.twig', ['form' => $form->createView()]);
     }
 
-    #[Route('/admin/album/delete/{id}', name: 'admin_album_delete', requirements: ['id' => '\d+'])]
+    #[Route('/admin/album/delete/{id}', name: 'admin_album_delete', requirements: ['id' => '\d+'], methods: ['POST'])]
+    #[IsCsrfTokenValid('delete_album', '_token')]
     public function delete(int $id): Response
     {
         $album = $this->doctrine->getRepository(Album::class)->find($id);
