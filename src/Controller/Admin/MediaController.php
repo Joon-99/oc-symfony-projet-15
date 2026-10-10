@@ -7,6 +7,7 @@ use App\Entity\User;
 use App\Form\MediaType;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Filesystem\Path;
 use Symfony\Component\HttpFoundation\Request;
@@ -23,6 +24,7 @@ class MediaController extends AbstractController
         $this->doctrine = $doctrine;
     }
 
+    #[IsGranted('ROLE_ADMIN')]
     #[Route('/admin/media', name: 'admin_media_index')]
     public function index(Request $request, #[CurrentUser] ?User $user): Response
     {
@@ -49,6 +51,7 @@ class MediaController extends AbstractController
         ]);
     }
 
+    #[IsGranted('ROLE_ADMIN')]
     #[Route('/admin/media/add', name: 'admin_media_add')]
     public function add(Request $request, #[CurrentUser] ?User $user, #[Autowire('%media_upload_dir%')] string $mediaUploadsDir): Response
     {
@@ -72,6 +75,7 @@ class MediaController extends AbstractController
         return $this->render('admin/media/add.html.twig', ['form' => $form->createView()]);
     }
 
+    #[IsGranted('ROLE_ADMIN')]
     #[Route('/admin/media/delete/{id}', name: 'admin_media_delete')]
     public function delete(int $id, #[Autowire('%media_upload_dir%')] string $mediaUploadsDir): Response
     {

@@ -3,9 +3,11 @@
 namespace App\Controller;
 
 use App\Entity\Album;
+use App\Entity\User;
 use App\Repository\AlbumRepository;
 use App\Repository\MediaRepository;
 use App\Repository\UserRepository;
+use App\Service\UserService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -15,12 +17,18 @@ class HomeController extends AbstractController
     private UserRepository $userRepository;
     private AlbumRepository $albumRepository;
     private MediaRepository $mediaRepository;
+    private UserService $userService;
 
-    public function __construct(UserRepository $userRepository, AlbumRepository $albumRepository, MediaRepository $mediaRepository)
-    {
+    public function __construct(
+        UserRepository $userRepository,
+        AlbumRepository $albumRepository,
+        MediaRepository $mediaRepository,
+        UserService $userService
+    ) {
         $this->userRepository = $userRepository;
         $this->albumRepository = $albumRepository;
         $this->mediaRepository = $mediaRepository;
+        $this->userService = $userService;
     }
 
     #[Route('/', name: 'home')]
@@ -32,18 +40,22 @@ class HomeController extends AbstractController
     #[Route('/guests', name: 'guests')]
     public function guests(): Response
     {
-        $guests = $this->userRepository->findBy(['admin' => false]);
+        $guests = $this->userService->getEnabledGuests();
 
         return $this->render('front/guests.html.twig', [
             'guests' => $guests,
         ]);
     }
 
-    #[Route('/guest/{id}', name: 'guest', requirements: ['id' => '\d+'])]
-    public function guest(int $id): Response
+    #[Route('/guest/{guest}', name: 'guest', requirements: ['guest' => '\d+'])]
+    public function guest(User $guest): Response
     {
-        $guest = $this->userRepository->find($id);
-
+        if ($guest->isAdmin()) {
+            throw $this->createNotFoundException();
+        }
+        if (!$guest->isActive() && !$this->isGranted('ROLE_ADMIN')) {
+            throw $this->createNotFoundException('Cet utilisateur est inactif.');
+        }
         return $this->render('front/guest.html.twig', [
             'guest' => $guest,
         ]);
