@@ -261,17 +261,17 @@ class GuestMediaTest extends WebTestCase
         $this->client->loginUser($this->guest);
 
         $requests = [
-            ['GET', '/admin/album'],
-            ['GET', '/admin/album/add'],
-            ['POST', '/admin/album/add'],
-            ['GET', '/admin/album/update/'.$albumId],
-            ['POST', '/admin/album/update/'.$albumId],
-            ['GET', '/admin/album/delete/'.$albumId],
-            ['POST', '/admin/album/delete/'.$albumId],
+            ['GET', '/admin/album', 403],
+            ['GET', '/admin/album/add', 403],
+            ['POST', '/admin/album/add', 403],
+            ['GET', '/admin/album/update/'.$albumId, 403],
+            ['POST', '/admin/album/update/'.$albumId, 403],
+            ['GET', '/admin/album/delete/'.$albumId, 405],
+            ['POST', '/admin/album/delete/'.$albumId, 403],
         ];
-        foreach ($requests as [$method, $url]) {
+        foreach ($requests as [$method, $url, $status]) {
             $this->client->request($method, $url);
-            self::assertResponseStatusCodeSame(403, $method.' '.$url);
+            self::assertResponseStatusCodeSame($status, $method.' '.$url);
         }
 
         $manager = self::getContainer()->get(EntityManagerInterface::class);

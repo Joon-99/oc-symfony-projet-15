@@ -93,6 +93,7 @@ class AlbumControllerTest extends WebTestCase
         self::assertNull($manager->find(Album::class, $albumId));
     }
 
+    /** @param array<string, string> $parameters */
     #[DataProvider('rejectedDeleteRequests')]
     public function testRejectedDeleteRequestKeepsAlbum(string $method, array $parameters, int $status): void
     {
