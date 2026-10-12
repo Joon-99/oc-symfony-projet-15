@@ -16,6 +16,11 @@ doctrine:
         validate_xml_mapping: true
         naming_strategy: doctrine.orm.naming_strategy.underscore_number_aware
         auto_mapping: true
+        # Entities use the portable #[ORM\GeneratedValue] (AUTO) strategy. On Postgres, AUTO is
+        # ambiguous between SEQUENCE and IDENTITY (see https://github.com/doctrine/orm/issues/8893),
+        # so we pin the preference here instead of hardcoding a strategy in every entity.
+        identity_generation_preferences:
+            Doctrine\DBAL\Platforms\PostgreSQLPlatform: SEQUENCE
         mappings:
             App:
                 type: attribute
